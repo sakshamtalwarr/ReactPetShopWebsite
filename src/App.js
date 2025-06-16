@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 // Lucide React for icons
-import { Home, Info, Briefcase, Image, MessageCircle, Mail, MapPin, Phone, Clock, X,PawPrint, Scissors, Droplet, Bug, Handshake, Monitor, Plus, Minus, BookOpen, MessageSquare, ShoppingBag, Bot, ArrowUpCircle, User } from 'lucide-react';
+import { Home, Info, Briefcase, Image, MessageCircle, Mail, MapPin, Phone, Clock, X, PawPrint, Scissors, Droplet, Bug, Handshake, Monitor, Plus, Minus, BookOpen, MessageSquare, ShoppingBag, Bot, ArrowUpCircle, User } from 'lucide-react';
+
+// NOTE: Firebase imports removed as per user's previous modifications.
+// The user's provided code had removed Firebase authentication and database setup.
 
 const App = () => {
   // State for current page, used for simple routing
@@ -14,17 +17,15 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [fadeEffect, setFadeEffect] = useState('fade-in');
   
-  // State for AI prompt visibility
+  // State for AI prompt visibility (retained from user's provided code)
   const [showAiPrompt, setShowAiPrompt] = useState(true);
 
-  // New states for authentication
+  // New states for authentication (retained from user's provided code)
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isAuthReady, setIsAuthReady] = useState(false); // New: Tracks when Firebase auth is initialized
+  // NOTE: isAuthReady and userId states related to Firebase removed as per user's previous modifications.
   const [isAdmin, setIsAdmin] = useState(false);
-   const [userId, setUserId] = useState(null); // Stores the current user's UID
   const [loginError, setLoginError] = useState('');
   
-
 
   // Effect for the loading screen animation
   useEffect(() => {
@@ -60,7 +61,7 @@ const App = () => {
     };
   }, []);
 
-  // Effect for AI prompt visibility
+  // Effect for AI prompt visibility (retained from user's provided code)
   useEffect(() => {
     // Show prompt for 5 seconds on initial load, then hide
     const promptTimer = setTimeout(() => {
@@ -89,6 +90,7 @@ const App = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Login handler with hardcoded credentials (retained from user's provided code)
   const handleLogin = (username, password) => {
     setLoginError(''); // Clear previous errors
     // Hardcoded credentials for demonstration purposes
@@ -103,23 +105,42 @@ const App = () => {
     }
   };
 
+  // Logout handler (retained from user's provided code)
   const handleLogout = () => {
     setIsLoggedIn(false);
     setIsAdmin(false);
     setCurrentPage('home'); // Redirect to home page on logout
   };
-// Handler to close the AI prompt manually.
+
+  // Handler to close the AI prompt manually. (retained from user's provided code)
   const handleCloseAiPrompt = () => {
     setShowAiPrompt(false);
   };
+
   // Helper function to render different pages based on state
   const renderPage = () => {
     if (currentPage === 'login') {
       return <LoginForm onLogin={handleLogin} error={loginError} />;
     }
+    // Admin dashboard protected by isAdmin state (retained from user's provided code)
     if (currentPage === 'admin-dashboard' && isAdmin) {
       return <AdminDashboard />;
+    } else if (currentPage === 'admin-dashboard' && !isAdmin) {
+      // Unauthorized access message for non-admins (added for clarity)
+      return (
+        <div className="py-24 px-6 md:px-12 bg-red-100 min-h-screen text-center flex flex-col items-center justify-center mt-[88px]">
+          <h2 className="text-4xl font-bold text-red-700 mb-4 font-playfair">Unauthorized Access</h2>
+          <p className="text-lg text-red-600 mb-8">You do not have permission to access the Admin Dashboard. Please log in with admin credentials.</p>
+          <button
+            onClick={() => setCurrentPage('home')}
+            className="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95"
+          >
+            Go to Home
+          </button>
+        </div>
+      );
     }
+    
     switch (currentPage) {
       case 'home':
         return <HomePage setCurrentPage={handlePageChangeAndScrollToTop} />;
@@ -130,7 +151,7 @@ const App = () => {
       case 'products':
         return <ProductsPage setCurrentPage={handlePageChangeAndScrollToTop} />;
       case 'product-gallery':
-        return <ProductGalleryPage />;
+        return <ProductGalleryPage setCurrentPage={handlePageChangeAndScrollToTop} />;
       case 'gallery':
         return <GalleryPage />;
       case 'testimonials':
@@ -161,8 +182,7 @@ const App = () => {
         </main>
         <Footer />
 
-        {/* Floating AI Assistant Shortcut Button */}
-         {/* Floating AI Assistant Shortcut Button */}
+        {/* Floating AI Assistant Shortcut Button (retained from user's provided code) */}
         <button
           onClick={handleAIShortcutClick}
           className="fixed bottom-4 right-4 md:bottom-6 md:right-6 bg-[#0AB9C6] hover:bg-[#089AA6] text-white p-4 rounded-full shadow-lg transition duration-300 transform hover:scale-110 active:scale-95 z-50 flex items-center justify-center group"
@@ -171,11 +191,11 @@ const App = () => {
           <PawPrint className="h-6 w-6 relative" />
           <Bot className="h-4 w-4 absolute top-1 right-1 text-yellow-300 group-hover:text-white transition-colors duration-300" />
           {showAiPrompt && (
-            <div className="absolute right-full mr-4 p-2 bg-gray-800 text-white text-sm rounded-md shadow-md opacity-0 animate-fadeInRight max-w-[180px] text-center flex items-center justify-between">
+            <div className="absolute right-full mr-4 p-1 bg-[#0AB9C6] text-white text-sm rounded-md shadow-md opacity-100 animate-fadeInRight max-w-[250px] text-center flex items-center justify-between">
               <span>Click here to talk to pet AI assistant!</span>
               <button
-                onClick={handleCloseAiPrompt}
-                className="ml-2 p-1 rounded-full hover:bg-gray-700 transition-colors duration-200"
+                onClick={handleCloseAiPrompt} // Close button for AI prompt
+                className="ml-2 p-1 rounded-full hover:bg-yellow-700 transition-colors duration-400"
                 aria-label="Close AI prompt"
               >
                 <X className="w-4 h-4 text-white" />
@@ -185,9 +205,10 @@ const App = () => {
           )}
         </button>
 
+        {/* Floating Social Media Buttons (retained from user's provided code) */}
         <div className="fixed bottom-4 left-4 md:bottom-6 md:left-6 flex flex-col space-y-3 z-50">
             <a
-                href="https://www.facebook.com/your-facebook-page" // Replace with actual Facebook page URL
+                href="https://www.facebook.com/share/1EDmkyYRoj/" // Replace with actual Facebook page URL
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center"
@@ -206,7 +227,7 @@ const App = () => {
                 </svg>
             </a>
             <a
-                href="https://www.instagram.com/your-instagram-page" // Replace with actual Instagram page URL
+                href="https://www.instagram.com/abhappypaws?igsh=MXY0OGJhZGl4YWRqZA==" // Replace with actual Instagram page URL
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-pink-600 hover:bg-pink-700 text-white p-3 rounded-full shadow-lg transition duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center"
@@ -225,7 +246,6 @@ const App = () => {
                 </svg>
             </a>
         </div>
-
 
 
         {/* Scroll-to-Top Button */}
@@ -256,9 +276,12 @@ const LoadingScreen = ({ fadeEffect }) => {
           <Bot className="h-12 w-12 absolute top-4 left-1/2 -translate-x-1/2 text-yellow-300 animate-pulse-slow" />
         </div>
         {/* Applied Playfair Display */}
-        <h1 className="text-5xl font-extrabold text-gray-900 mt-4 font-playfair">
-          AB <span className="text-[#0AB9C6]">Happy Paws</span>
-        </h1>
+        {/* Replaced text with image logo as requested */}
+        <imgx
+          src="public\logo.png" // Path to your logo image
+          alt="AB Happy Paws Logo"
+          className="mx-auto mt-4 w-48 md:w-64 h-auto" // Adjust width as needed
+        />
         <p className="text-lg text-gray-700 mt-2">Loading happiness...</p>
       </div>
     </div>
@@ -316,8 +339,12 @@ const Navbar = ({ setCurrentPage, currentPage, isLoggedIn, isAdmin, onLogout }) 
       {/* Brand Logo/Name */}
       <div className="flex items-center space-x-2 cursor-pointer" onClick={() => setCurrentPage('home')}>
         <PawPrint className="text-[#0AB9C6] h-9 w-9 transform rotate-[-15deg]" /> {/* Teal paw print, slightly rotated */}
-        {/* Applied Playfair Display */}
-        <span className="text-3xl font-extrabold text-gray-900 font-playfair">AB <span className="text-[#0AB9C6]">Happy Paws</span></span>
+        {/* Replaced text with image logo as requested */}
+        <img
+          src="image_bcd454.jpg" // Path to your logo image
+          alt="AB Happy Paws Logo"
+          className="h-10 w-auto" // Adjust height as needed
+        />
       </div>
 
       {/* Desktop Navigation */}
@@ -546,18 +573,18 @@ const HomePage = ({ setCurrentPage }) => {
 
   const petFacts = [
     {
-      title: "Loyalty & Companionship",
-      description: "Pets offer unconditional love and can significantly reduce feelings of loneliness.",
+      title: "🐾 Unmatched Companionship",
+      description: "Pets are more than just animals — they are family. Our services are designed to support the special bond between you and your furry companion. Whether you are adopting a new friend or caring for a lifelong buddy, we are here to help you provide the love they deserve.",
       gif: "https://gifsec.com/wp-content/uploads/2022/09/happy-puppy-gif-8.gif" // Dog wagging tail
     },
     {
       title: "Stress Relief",
-      description: "Interacting with pets has been shown to decrease stress levels and lower blood pressure.",
+      description: "Spending time with pets is proven to reduce anxiety and boost emotional health. That’s why we offer grooming and care services that keep your pets relaxed, happy, and healthy — making life better for both of you.",
       gif: "https://media.tenor.com/7ZElkaxrDvoAAAAM/stress-relief-stress.gif" // Cat purring/kneading
     },
     {
       title: "Active Lifestyle",
-      description: "Owning a pet, especially a dog, encourages more physical activity and outdoor time.",
+      description: "A healthy pet means a happier, more active you. From nutritious foods and health checkups to grooming that keeps them ready for play, we help ensure your pet stays energetic and full of life.",
       gif: "https://s.yimg.com/ny/api/res/1.2/cdPjf60wDAPOT7d.ePLy1A--/YXBwaWQ9aGlnaGxhbmRlcjt3PTcwNTtoPTcwNQ--/https://media.zenfs.com/en/homerun/feed_manager_auto_publish_494/4f64ecc4a6ef0720b6458601bddc0e99" // Dog running happily
     }
   ];
@@ -566,7 +593,7 @@ const HomePage = ({ setCurrentPage }) => {
     <section className="min-h-screen flex flex-col pt-[88px]">
       {/* Hero Section */}
       <div className="relative h-screen-minus-nav flex items-center justify-center bg-cover bg-center parallax-bg"
-        style={{ backgroundImage: "url('/bgpic.png')" }}
+        style={{ backgroundImage: "url('/bgpichero.png')" }}
 
       >
         <div className="absolute inset-0 bg-black opacity-55 rounded-b-lg"></div>
@@ -830,50 +857,52 @@ const AboutPage = ({ setCurrentPage }) => {
   );
 };
 
-// Services Page Component (Unchanged from previous)
+// Services Page Component
 const ServicesPage = ({ setCurrentPage }) => {
   const services = [
     {
       name: 'Full Grooming',
       description: 'Pamper your furry friend with our premium grooming services! From a refreshing bath to a stylish trim, we ensure your pet looks and feels their absolute best. Because every pet deserves to be clean, comfortable, and happy!',
       icon: '🐕',
-      image: 'https://placehold.co/400x300/F0F8FF/000000?text=Full+Grooming',
+      image: 'https://static.vecteezy.com/system/resources/previews/005/447/163/non_2x/pet-grooming-for-dogs-and-cats-in-flat-cartoon-hand-drawn-background-illustration-the-main-tools-which-are-used-in-beauty-salon-for-poster-or-banner-vector.jpg',
     },
     {
       name: 'Haircut',
       description: 'Stylish haircuts or trims to maintain a neat and manageable fur length, customized to your pet\'s breed and your preferences.',
       icon: '✂️',
-      image: 'https://placehold.co/400x300/F0F8FF/000000?text=Haircut',
+      image: 'https://img.freepik.com/free-vector/pet-care-concept-illustration_114360-9419.jpg?ga=GA1.1.2010164998.1740327420&semt=ais_hybrid',
     },
     {
       name: 'Flea & Tick Treatment',
       description: 'Keep your pet safe from fleas and ticks with our effective treatments. From spot-on solutions to flea collars and shampoos, we offer long-lasting protection for a happy, itch-free pet!',
       icon: '❌',
-      image: 'https://placehold.co/400x300/F0F8FF/000000?text=Flea+Tick+Treatment',
+      image: 'https://us.123rf.com/450wm/prettyvectors/prettyvectors2304/prettyvectors230400286/203509819-animal-pet-dog-cat-tick-attack-season-concept-vector-graphic-design-element-illustration.jpg?ver=6',
     },
     {
       name: 'Wash & Blow Dry',
       description: 'Thorough cleaning and shampooing of your pet to keep their coat fresh, shiny, and free of dirt and odor. Includes a gentle blow dry for a fluffy finish.',
       icon: '🌬️',
-      image: 'https://placehold.co/400x300/F0F8FF/000000?text=Wash+Blow+Dry',
+      image: 'https://img.freepik.com/premium-vector/professional-care-service-pets-salon-groomer-dries-fur-happy-dog-after-bathing-with-hairdryer-adorable-fluffy-puppy-grooming-table-flat-isolated-vector-illustration-white-background_633472-4397.jpg?ga=GA1.1.2010164998.1740327420&semt=ais_hybrid',
     },
     {
       name: 'Offline Pet Health Consultation',
       description: 'Get professional pet care advice both online and in-store. Whether you need health guidance, nutrition tips, or general pet care support, our experts are here to help—anytime, anywhere!',
       icon: '🏥',
-      image: 'https://placehold.co/400x300/F0F8FF/000000?text=Offline+Consultation',
+      image: 'https://img.freepik.com/premium-vector/cartoon-owner-doctor-look-dogs-xray-monitor-process-examining-dogs-cats-modern-animal-healthcare-services-medical-center-domestic-animals-treatment-vector_776652-3594.jpg?ga=GA1.1.2010164998.1740327420&semt=ais_hybrid',
+      height: '200px',
+      width: '200px',
     },
     {
       name: 'Nail Trimming',
       description: 'Expert nail trimming services to keep your pet\'s nails at an appropriate length, preventing discomfort, overgrowth, and potential health issues.',
       icon: '🐾',
-      image: 'https://placehold.co/400x300/F0F8FF/000000?text=Nail+Trimming',
+      image: 'https://img.freepik.com/free-vector/dog-paw-concept-illustration_114360-8598.jpg?ga=GA1.1.2010164998.1740327420&semt=ais_hybrid',
     },
     {
       name: 'Online Consultation For Your Pet!',
       description: 'Get professional advice from certified vets anytime, anywhere. Whether it\'s health concerns, nutrition, or general pet care, our online consultation service ensures your pet gets the best care from the comfort of your home!',
       icon: '📱',
-      image: 'https://placehold.co/400x300/F0F8FF/000000?text=Online+Consultation',
+      image: 'https://img.freepik.com/premium-vector/veterinary-doctor-online-consultation-veterinary-clinic-website-vet-doctor-onlinecell-phone-online-veterinarian-communication-modern-healthcare-technologies-dog_506530-1467.jpg?ga=GA1.1.2010164998.1740327420&semt=ais_hybrid',
     },
   ];
 
@@ -890,7 +919,13 @@ const ServicesPage = ({ setCurrentPage }) => {
               key={index}
               className="bg-white rounded-xl shadow-xl overflow-hidden transform transition duration-500 hover:scale-[1.03] hover:shadow-2xl cursor-pointer flex flex-col border-t-4 border-[#0AB9C6]" /* Enhanced shadow and added border */
             >
-              <img src={service.image} alt={service.name} className="w-full h-52 object-cover object-center rounded-t-xl" />
+              <div className="w-full h-52 flex items-center justify-center bg-gray-100 rounded-t-xl"> {/* Added wrapper div to control image sizing */}
+                <img
+                  src={service.image}
+                  alt={service.name}
+                  className="max-w-full max-h-full object-contain rounded-t-xl" /* Changed to object-contain */
+                />
+              </div>
               <div className="p-7 flex-grow">
                 <h3 className="text-3xl font-bold text-gray-900 mb-4 flex items-center font-playfair"> {/* Applied Playfair Display */}
                   <span className="mr-3 text-4xl text-[#0AB9C6]">{service.icon}</span> {service.name}
@@ -922,141 +957,262 @@ const ServicesPage = ({ setCurrentPage }) => {
   );
 };
 
-// Products Page Component
+// Products Page Component: Displays a preview of products with categories.
 const ProductsPage = ({ setCurrentPage }) => {
-  // Placeholder products - you'd replace these with actual product data
-  const products = [
-    {
-      name: 'Cozy Pet Bed',
-      description: 'Soft and comfortable bed for your pet to rest and sleep soundly.',
-      image: 'https://placehold.co/400x300/ffdddd/000000?text=Pet+Bed',
-      price: '₹1,500',
-    },
-    {
-      name: 'Interactive Puzzle Toy',
-      description: 'Engaging toy to keep your pet mentally stimulated and entertained for hours.',
-      image: 'https://placehold.co/400x300/ddffdd/000000?text=Puzzle+Toy',
-      price: '₹750',
-    },
-    {
-      name: 'Adjustable Pet Collar',
-      description: 'Durable and stylish collar with adjustable fit for maximum comfort and safety.',
-      image: 'https://placehold.co/400x300/ddddff/000000?text=Pet+Collar',
-      price: '₹400',
-    },
-    {
-      name: 'Stainless Steel Food Bowl',
-      description: 'Hygienic and easy-to-clean food bowl, perfect for daily meals.',
-      image: 'https://placehold.co/400x300/ffddee/000000?text=Food+Bowl',
-      price: '₹300',
-    },
-  ];
+    const [activeCategory, setActiveCategory] = useState('All');
 
-  return (
-    <section className="py-24 px-6 md:px-12 bg-white mt-[88px]">
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-4xl md:text-5xl font-bold text-center text-gray-900 mb-16 relative font-playfair"> {/* Applied Playfair Display */}
-          Explore Our <span className="text-[#0AB9C6]">Premium Products</span>
-          <span className="block w-20 h-1 bg-[#0AB9C6] mx-auto mt-4 rounded-full"></span>
-        </h2>
-        <p className="text-center text-lg text-gray-700 mb-12 max-w-3xl mx-auto leading-relaxed">
-          Explore our wide range of high-quality pet accessories designed to keep your furry friends happy, stylish, and comfortable. From cozy beds and trendy collars to interactive toys and feeding essentials, we have everything your pet needs.
-        </p>
+    // Categorized product data (updated with more categories)
+    const productCategories = {
+        'All': [
+            { name: 'Cozy Pet Bed', description: 'Soft and comfortable bed for your pet to rest and sleep soundly.', image: 'https://placehold.co/400x300/ffdddd/000000?text=Pet+Bed', price: '₹1,500', category: 'Beds & Furniture' },
+            { name: 'Interactive Puzzle Toy', description: 'Engaging toy to keep your pet mentally stimulated and entertained for hours.', image: 'https://placehold.co/400x300/ddffdd/000000?text=Puzzle+Toy', price: '₹750', category: 'Toys' },
+            { name: 'Adjustable Pet Collar', description: 'Durable and stylish collar with adjustable fit for maximum comfort and safety.', image: 'https://placehold.co/400x300/ddddff/000000?text=Pet+Collar', price: '₹400', category: 'Apparel & Accessories' },
+            { name: 'Stainless Steel Food Bowl', description: 'Hygienic and easy-to-clean food bowl, perfect for daily meals.', image: 'https://placehold.co/400x300/ffddee/000000?text=Food+Bowl', price: '₹300', category: 'Food & Nutrition' },
+            { name: 'Dental Chew Sticks', description: 'Promotes dental health and freshens breath.', image: 'https://placehold.co/400x300/e0f7fa/000000?text=Chew+Sticks', price: '₹200', category: 'Chewables & Treats' },
+            { name: 'Comfort Crate', description: 'Secure and comfortable space for training or travel.', image: 'https://placehold.co/400x300/e6e6fa/000000?text=Pet+Crate', price: '₹3,000', category: 'Beds & Furniture' },
+            { name: 'Organic Puppy Food', description: 'Nutritious and balanced food for growing puppies.', image: 'https://placehold.co/400x300/f0fff0/000000?text=Puppy+Food', price: '₹2,500', category: 'Food & Nutrition' },
+            { name: 'Winter Dog Coat', description: 'Keeps your dog warm and cozy in cold weather.', image: 'https://placehold.co/400x300/fff0f5/000000?text=Dog+Coat', price: '₹1,200', category: 'Apparel & Accessories' },
+            { name: 'Fetch Ball Set', description: 'Durable and bouncy balls for endless playtime.', image: 'https://placehold.co/400x300/ffdab9/000000?text=Fetch+Balls', price: '₹350', category: 'Toys' },
+            { name: 'Flea & Tick Shampoo', description: 'Effective formula to eliminate and repel pests.', image: 'https://placehold.co/400x300/ffe4e1/000000?text=Flea+Shampoo', price: '₹600', category: 'Grooming & Health' },
+            { name: 'Clicker Trainer', description: 'Tool for positive reinforcement training.', image: 'https://placehold.co/400x300/add8e6/000000?text=Clicker', price: '₹150', category: 'Training Aids' },
+            { name: 'Grooming Mitt', description: 'Gentle deshedding and massage tool.', image: 'https://placehold.co/400x300/d8bfd8/000000?text=Grooming+Mitt', price: '₹400', category: 'Grooming & Health' },
+            { name: 'Cat Tree Condo', description: 'Multi-level cat tree with scratching posts and perches.', image: 'https://placehold.co/400x300/e0ffea/000000?text=Cat+Tree', price: '₹4,000', category: 'Beds & Furniture' },
+            { name: 'Grain-Free Cat Food', description: 'Premium food for felines with sensitive stomachs.', image: 'https://placehold.co/400x300/e3f2fd/000000?text=Cat+Food', price: '₹1,800', category: 'Food & Nutrition' },
+            { name: 'Laser Pointer Toy', description: 'Engaging laser toy for interactive play with cats.', image: 'https://placehold.co/400x300/fbe9e7/000000?text=Laser+Toy', price: '₹250', category: 'Toys' },
+            { name: 'Pet Carrier Backpack', description: 'Comfortable and secure backpack for transporting small pets.', image: 'https://placehold.co/400x300/ede7f6/000000?text=Carrier+Bag', price: '₹2,200', category: 'Travel & Carriers' },
+            { name: 'Bird Cage', description: 'Spacious and safe home for pet birds.', image: 'https://placehold.co/400x300/fcf4d4/000000?text=Bird+Cage', price: '₹3,500', category: 'Habitats & Enclosures' },
+            { name: 'Aquarium Starter Kit', description: 'All-in-one kit for beginning fish enthusiasts.', image: 'https://placehold.co/400x300/d4edda/000000?text=Aquarium', price: '₹5,000', category: 'Habitats & Enclosures' },
+        ],
+        'Beds & Furniture': [
+            { name: 'Cozy Pet Bed', description: 'Soft and comfortable bed for your pet to rest and sleep soundly.', image: 'https://placehold.co/400x300/ffdddd/000000?text=Pet+Bed', price: '₹1,500', category: 'Beds & Furniture' },
+            { name: 'Comfort Crate', description: 'Secure and comfortable space for training or travel.', image: 'https://placehold.co/400x300/e6e6fa/000000?text=Pet+Crate', price: '₹3,000', category: 'Beds & Furniture' },
+            { name: 'Cat Tree Condo', description: 'Multi-level cat tree with scratching posts and perches.', image: 'https://placehold.co/400x300/e0ffea/000000?text=Cat+Tree', price: '₹4,000', category: 'Beds & Furniture' },
+        ],
+        'Chewables & Treats': [
+            { name: 'Dental Chew Sticks', description: 'Promotes dental health and freshens breath.', image: 'https://placehold.co/400x300/e0f7fa/000000?text=Chew+Sticks', price: '₹200', category: 'Chewables & Treats' },
+        ],
+        'Food & Nutrition': [
+            { name: 'Stainless Steel Food Bowl', description: 'Hygienic and easy-to-clean food bowl, perfect for daily meals.', image: 'https://placehold.co/400x300/ffddee/000000?text=Food+Bowl', price: '₹300', category: 'Food & Nutrition' },
+            { name: 'Organic Puppy Food', description: 'Nutritious and balanced food for growing puppies.', image: 'https://placehold.co/400x300/f0fff0/000000?text=Puppy+Food', price: '₹2,500', category: 'Food & Nutrition' },
+            { name: 'Grain-Free Cat Food', description: 'Premium food for felines with sensitive stomachs.', image: 'https://placehold.co/400x300/e3f2fd/000000?text=Cat+Food', price: '₹1,800', category: 'Food & Nutrition' },
+        ],
+        'Apparel & Accessories': [
+            { name: 'Adjustable Pet Collar', description: 'Durable and stylish collar with adjustable fit for maximum comfort and safety.', image: 'https://placehold.co/400x300/ddddff/000000?text=Pet+Collar', price: '₹400', category: 'Apparel & Accessories' },
+            { name: 'Winter Dog Coat', description: 'Keeps your dog warm and cozy in cold weather.', image: 'https://placehold.co/400x300/fff0f5/000000?text=Dog+Coat', price: '₹1,200', category: 'Apparel & Accessories' },
+        ],
+        'Toys': [
+            { name: 'Interactive Puzzle Toy', description: 'Engaging toy to keep your pet mentally stimulated and entertained for hours.', image: 'https://placehold.co/400x300/ddffdd/000000?text=Puzzle+Toy', price: '₹750', category: 'Toys' },
+            { name: 'Fetch Ball Set', description: 'Durable and bouncy balls for endless playtime.', image: 'https://placehold.co/400x300/ffdab9/000000?text=Fetch+Balls', price: '₹350', category: 'Toys' },
+            { name: 'Laser Pointer Toy', description: 'Engaging laser toy for interactive play with cats.', image: 'https://placehold.co/400x300/fbe9e7/000000?text=Laser+Toy', price: '₹250', category: 'Toys' },
+        ],
+        'Grooming & Health': [
+            { name: 'Flea & Tick Shampoo', description: 'Effective formula to eliminate and repel pests.', image: 'https://placehold.co/400x300/ffe4e1/000000?text=Flea+Shampoo', price: '₹600', category: 'Grooming & Health' },
+            { name: 'Grooming Mitt', description: 'Gentle deshedding and massage tool.', image: 'https://placehold.co/400x300/d8bfd8/000000?text=Grooming+Mitt', price: '₹400', category: 'Grooming & Health' },
+        ],
+        'Training Aids': [
+            { name: 'Clicker Trainer', description: 'Tool for positive reinforcement training.', image: 'https://placehold.co/400x300/add8e6/000000?text=Clicker', price: '₹150', category: 'Training Aids' },
+        ],
+        'Travel & Carriers': [
+            { name: 'Pet Carrier Backpack', description: 'Comfortable and secure backpack for transporting small pets.', image: 'https://placehold.co/400x300/ede7f6/000000?text=Carrier+Bag', price: '₹2,200', category: 'Travel & Carriers' },
+        ],
+        'Habitats & Enclosures': [
+            { name: 'Bird Cage', description: 'Spacious and safe home for pet birds.', image: 'https://placehold.co/400x300/fcf4d4/000000?text=Bird+Cage', price: '₹3,500', category: 'Habitats & Enclosures' },
+            { name: 'Aquarium Starter Kit', description: 'All-in-one kit for beginning fish enthusiasts.', image: 'https://placehold.co/400x300/d4edda/000000?text=Aquarium', price: '₹5,000', category: 'Habitats & Enclosures' },
+        ],
+    };
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-          {products.map((product, index) => (
-            <div key={index} className="bg-orange-50 rounded-xl shadow-xl overflow-hidden transform transition duration-500 hover:scale-[1.03] hover:shadow-2xl cursor-pointer flex flex-col border-t-4 border-orange-200"> {/* Changed background to orange-50 and border to orange-200 */}
-              <img src={product.image} alt={product.name} className="w-full h-52 object-cover object-center rounded-t-xl" />
-              <div className="p-7 flex-grow">
-                <h3 className="text-2xl font-bold text-gray-900 mb-3 font-playfair">{product.name}</h3> {/* Applied Playfair Display */}
-                <p className="text-gray-700 leading-relaxed text-base mb-4">{product.description}</p>
-                <p className="text-xl font-bold text-[#0AB9C6]">{product.price}</p>
-              </div>
-              <div className="p-7 pt-0">
-                <button className="bg-[#0AB9C6] hover:bg-[#089AA6] text-white font-semibold py-2 px-6 rounded-full transition duration-300 transform hover:scale-105 active:scale-95">
-                  Add to Cart
-                </button>
-              </div>
+    const categories = Object.keys(productCategories);
+
+    // Filter products based on the active category
+    const productsToDisplay = activeCategory === 'All'
+        ? productCategories['All']
+        : productCategories[activeCategory];
+
+    const googlePhotosAlbumUrl = "https://photos.app.goo.gl/YourGooglePhotosAlbumLinkHere"; // Replace with your actual Google Photos album link
+
+    return (
+        <section className="py-24 px-6 md:px-12 bg-white mt-[88px]">
+            <div className="max-w-7xl mx-auto">
+                <h2 className="text-4xl md:text-5xl font-bold text-center text-gray-900 mb-16 relative font-playfair">
+                    Explore Our <span className="text-[#0AB9C6]">Premium Products</span>
+                    <span className="block w-20 h-1 bg-[#0AB9C6] mx-auto mt-4 rounded-full"></span>
+                </h2>
+                <p className="text-center text-lg text-gray-700 mb-12 max-w-3xl mx-auto leading-relaxed">
+                    Explore our wide range of high-quality pet accessories designed to keep your furry friends happy, stylish, and comfortable. From cozy beds and trendy collars to interactive toys and feeding essentials, we have everything your pet needs.
+                </p>
+
+                {/* Google Photos Album Button */}
+                <div className="text-center mb-12">
+                    <a
+                        href={googlePhotosAlbumUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95 inline-flex items-center space-x-2"
+                    >
+                        <Image className="w-5 h-5" />
+                        <span>View Our Product Album</span>
+                    </a>
+                </div>
+
+                {/* Category Navigation */}
+                <div className="flex flex-wrap justify-center gap-4 mb-12">
+                    {categories.map((category) => (
+                        <button
+                            key={category}
+                            onClick={() => setActiveCategory(category)}
+                            className={`px-6 py-2 rounded-full font-semibold text-lg transition-all duration-300
+                                ${activeCategory === category
+                                    ? 'bg-[#0AB9C6] text-white shadow-md'
+                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                }`}
+                        >
+                            {category}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+                    {productsToDisplay.map((product, index) => (
+                        <div key={index} className="bg-orange-50 rounded-xl shadow-xl overflow-hidden transform transition duration-500 hover:scale-[1.03] hover:shadow-2xl cursor-pointer flex flex-col border-t-4 border-orange-200">
+                            <img src={product.image} alt={product.name} className="w-full h-52 object-cover object-center rounded-t-xl" />
+                            <div className="p-7 flex-grow">
+                                <h3 className="text-2xl font-bold text-gray-900 mb-3 font-playfair">{product.name}</h3>
+                                <p className="text-gray-700 leading-relaxed text-base mb-4">{product.description}</p>
+                                <p className="text-xl font-bold text-[#0AB9C6]">{product.price}</p>
+                            </div>
+                            <div className="p-7 pt-0">
+                                <button className="bg-[#0AB9C6] hover:bg-[#089AA6] text-white font-semibold py-2 px-6 rounded-full transition duration-300 transform hover:scale-105 active:scale-95">
+                                    Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <div className="text-center mt-16">
+                    <button
+                        onClick={() => setCurrentPage('product-gallery')} // Navigate to new Product Gallery Page
+                        className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95"
+                    >
+                        View Full Product Gallery
+                    </button>
+                </div>
             </div>
-          ))}
-        </div>
-        <div className="text-center mt-16">
-          <button
-            onClick={() => setCurrentPage('product-gallery')} // Navigate to new Product Gallery Page
-            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95"
-          >
-            View All Products
-          </button>
-        </div>
-      </div>
-    </section>
-  );
+        </section>
+    );
 };
 
 // New Product Gallery Page Component
-const ProductGalleryPage = () => {
-  const allProductImages = [
-    { id: 1, src: 'https://placehold.co/600x400/ffdddd/000000?text=Product+Bed+1', name: 'Deluxe Pet Bed', price: '₹1,500' },
-    { id: 2, src: 'https://placehold.co/600x400/ddffdd/000000?text=Product+Toy+1', name: 'Smart Puzzle Feeder', price: '₹750' },
-    { id: 3, src: 'https://placehold.co/600x400/ddddff/000000?text=Product+Collar+1', name: 'Comfort Harness Set', price: '₹400' },
-    { id: 4, src: 'https://placehold.co/600x400/ffddee/000000?text=Product+Bowl+1', name: 'Anti-Gulp Bowl', price: '₹300' },
-    { id: 5, src: 'https://placehold.co/600x400/e0e0e0/000000?text=Product+Leash+1', name: 'Reflective Leash', price: '₹600' },
-    { id: 6, src: 'https://placehold.co/600x400/a0c4ff/000000?text=Product+Grooming+1', name: 'Slicker Brush', price: '₹450' },
-    { id: 7, src: 'https://placehold.co/600x400/ffccaa/000000?text=Product+Snacks+1', name: 'Healthy Treats Pack', price: '₹250' },
-    { id: 8, src: 'https://placehold.co/600x400/ccffcc/000000?text=Product+Carrier+1', name: 'Travel Carrier', price: '₹2,800' },
-    { id: 9, src: 'https://placehold.co/600x400/ffffee/000000?text=Product+Shampoo+1', name: 'Oatmeal Shampoo', price: '₹550' },
-    { id: 10, src: 'https://placehold.co/600x400/e0f7fa/000000?text=Product+Chew+1', name: 'Durable Chew Toy', price: '₹350' },
-    { id: 11, src: 'https://placehold.co/600x400/caf0f8/000000?text=Product+Water+Dispenser', name: 'Automatic Water Dispenser', price: '₹1,200' },
-    { id: 12, src: 'https://placehold.co/600x400/a2d2ff/000000?text=Product+Training+Clicker', name: 'Training Clicker', price: '₹150' },
-  ];
+const ProductGalleryPage = ({ setCurrentPage }) => {
+    // Extensive list of categorized products
+    const allCategorizedProducts = {
+        'Beds & Furniture': [
+            { id: 1, src: 'https://placehold.co/600x400/ffdddd/000000?text=Pet+Bed+1', name: 'Deluxe Pet Bed', price: '₹1,500' },
+            { id: 13, src: 'https://placehold.co/600x400/e6e6fa/000000?text=Pet+Crate', name: 'Comfort Crate', price: '₹3,000' },
+            { id: 14, src: 'https://placehold.co/600x400/fff8dc/000000?text=Orthopedic+Bed', name: 'Orthopedic Dog Bed', price: '₹2,500' },
+            { id: 25, src: 'https://placehold.co/600x400/e0ffea/000000?text=Cat+Tree', name: 'Cat Tree Condo', price: '₹4,000' },
+        ],
+        'Chewables & Treats': [
+            { id: 7, src: 'https://placehold.co/600x400/ffccaa/000000?text=Product+Snacks+1', name: 'Healthy Treats Pack', price: '₹250' },
+            { id: 15, src: 'https://placehold.co/600x400/faebd7/000000?text=Dental+Chew', name: 'Dental Chew Sticks', price: '₹200' },
+            { id: 16, src: 'https://placehold.co/600x400/ffefd5/000000?text=Training+Treats', name: 'Training Treats (Salmon)', price: '₹300' },
+        ],
+        'Food & Nutrition': [
+            { id: 4, src: 'https://placehold.co/600x400/ffddee/000000?text=Product+Bowl+1', name: 'Anti-Gulp Bowl', price: '₹300' },
+            { id: 17, src: 'https://placehold.co/600x400/f0fff0/000000?text=Puppy+Food+Organic', name: 'Organic Puppy Food', price: '₹2,500' },
+            { id: 18, src: 'https://placehold.co/600x400/f5fffa/000000?text=Senior+Dog+Food', name: 'Senior Dog Food', price: '₹2,200' },
+            { id: 26, src: 'https://placehold.co/600x400/e3f2fd/000000?text=Cat+Food', name: 'Grain-Free Cat Food', price: '₹1,800' },
+        ],
+        'Apparel & Accessories': [
+            { id: 3, src: 'https://placehold.co/600x400/ddddff/000000?text=Product+Collar+1', name: 'Comfort Harness Set', price: '₹400' },
+            { id: 5, src: 'https://placehold.co/600x400/e0e0e0/000000?text=Product+Leash+1', name: 'Reflective Leash', price: '₹600' },
+            { id: 19, src: 'https://placehold.co/600x400/f0f8ff/000000?text=Winter+Coat', name: 'Winter Dog Coat', price: '₹1,200' },
+            { id: 20, src: 'https://placehold.co/600x400/ffe4e1/000000?text=Pet+Bandana', name: 'Stylish Pet Bandana', price: '₹150' },
+        ],
+        'Toys': [
+            { id: 2, src: 'https://placehold.co/600x400/ddffdd/000000?text=Product+Toy+1', name: 'Smart Puzzle Feeder', price: '₹750' },
+            { id: 10, src: 'https://placehold.co/600x400/e0f7fa/000000?text=Product+Chew+1', name: 'Durable Chew Toy', price: '₹350' },
+            { id: 21, src: 'https://placehold.co/600x400/ffefd5/000000?text=Fetch+Balls+Set', name: 'Fetch Ball Set (3-Pack)', price: '₹350' },
+            { id: 27, src: 'https://placehold.co/600x400/fbe9e7/000000?text=Laser+Toy', name: 'Laser Pointer Toy', price: '₹250' },
+        ],
+        'Grooming & Health': [
+            { id: 6, src: 'https://placehold.co/600x400/a0c4ff/000000?text=Product+Grooming+1', name: 'Slicker Brush', price: '₹450' },
+            { id: 9, src: 'https://placehold.co/600x400/ffffee/000000?text=Product+Shampoo+1', name: 'Oatmeal Shampoo', price: '₹550' },
+            { id: 22, src: 'https://placehold.co/600x400/ffe4e1/000000?text=Flea+Shampoo', name: 'Flea & Tick Shampoo', price: '₹600' },
+            { id: 23, src: 'https://placehold.co/600x400/d8bfd8/000000?text=Grooming+Mitt', name: 'Grooming Mitt', price: '₹400' },
+        ],
+        'Training Aids': [
+            { id: 11, src: 'https://placehold.co/600x400/caf0f8/000000?text=Product+Water+Dispenser', name: 'Automatic Water Dispenser', price: '₹1,200' },
+            { id: 12, src: 'https://placehold.co/600x400/a2d2ff/000000?text=Product+Training+Clicker', name: 'Training Clicker', price: '₹150' },
+            { id: 24, src: 'https://placehold.co/600x400/e0ffff/000000?text=Agility+Cones', name: 'Agility Cones Set', price: '₹800' },
+        ],
+        'Travel & Carriers': [
+            { id: 28, src: 'https://placehold.co/600x400/ede7f6/000000?text=Carrier+Bag', name: 'Pet Carrier Backpack', price: '₹2,200' },
+        ],
+        'Habitats & Enclosures': [
+            { id: 29, src: 'https://placehold.co/600x400/fcf4d4/000000?text=Bird+Cage', name: 'Bird Cage', price: '₹3,500' },
+            { id: 30, src: 'https://placehold.co/600x400/d4edda/000000?text=Aquarium', name: 'Aquarium Starter Kit', price: '₹5,000' },
+        ],
+    };
 
-  const whatsappNumber = '918660764838'; // Consistent WhatsApp number
+    const googlePhotosAlbumUrl = "https://photos.app.goo.gl/YourGooglePhotosAlbumLinkHere"; // Replace with your actual Google Photos album link
 
-  const handleBuyOnWhatsApp = (productName, price) => {
-    const message = `Hi AB's Happy Paws, I'm interested in buying the "${productName}" (Price: ${price}). Please provide more details or help me with the purchase.`;
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-  };
+    return (
+        <section className="py-24 px-6 md:px-12 bg-gradient-to-br from-pink-50 to-purple-50 mt-[88px]">
+            <div className="max-w-7xl mx-auto">
+                <h2 className="text-4xl md:text-5xl font-bold text-center text-gray-900 mb-16 relative font-playfair"> {/* Applied Playfair Display */}
+                    Our Full <span className="text-[#0AB9C6]">Product Gallery</span>
+                    <span className="block w-20 h-1 bg-[#0AB9C6] mx-auto mt-4 rounded-full"></span>
+                </h2>
+                <p className="text-center text-lg text-gray-700 mb-12 max-w-3xl mx-auto leading-relaxed">
+                    Browse through our complete collection of premium pet products. See something you like? Click "Buy on WhatsApp" to inquire!
+                </p>
 
-  return (
-    <section className="py-24 px-6 md:px-12 bg-gradient-to-br from-pink-50 to-purple-50 mt-[88px]"> {/* Added gradient background */}
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-4xl md:text-5xl font-bold text-center text-gray-900 mb-16 relative font-playfair"> {/* Applied Playfair Display */}
-          Our Full <span className="text-[#0AB9C6]">Product Gallery</span>
-          <span className="block w-20 h-1 bg-[#0AB9C6] mx-auto mt-4 rounded-full"></span>
-        </h2>
-        <p className="text-center text-lg text-gray-700 mb-12 max-w-3xl mx-auto leading-relaxed">
-          Browse through our complete collection of premium pet products. See something you like? Click "Buy on WhatsApp" to inquire!
-        </p>
+                {/* Google Photos Album Button */}
+                <div className="text-center mb-12">
+                    <a
+                        href={googlePhotosAlbumUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95 inline-flex items-center space-x-2"
+                    >
+                        <Image className="w-5 h-5" />
+                        <span>View Our Product Album</span>
+                    </a>
+                </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {allProductImages.map((product) => (
-            <div key={product.id} className="bg-white rounded-xl shadow-xl overflow-hidden group border-t-4 border-purple-200"> {/* Enhanced shadow and added border */}
-              <img
-                src={product.src}
-                alt={product.name}
-                className="w-full h-60 object-cover object-center transform transition duration-300 group-hover:scale-105"
-              />
-              <div className="p-5 text-center">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2 font-playfair">{product.name}</h3> {/* Applied Playfair Display */}
-                <p className="text-lg font-bold text-[#0AB9C6] mb-3">{product.price}</p>
-                <button
-                  onClick={() => handleBuyOnWhatsApp(product.name, product.price)}
-                  className="bg-[#0AB9C6] hover:bg-[#089AA6] text-white font-semibold py-2 px-5 rounded-full transition duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center mx-auto space-x-2"
-                >
-                  <Phone className="w-5 h-5" />
-                  <span>Buy on WhatsApp</span>
-                </button>
-              </div>
+                {Object.keys(allCategorizedProducts).map((categoryName) => (
+                    <div key={categoryName} className="mb-16">
+                        <h3 className="text-3xl font-bold text-gray-900 mb-8 text-center relative font-playfair">
+                            <span className="text-[#0AB9C6]">{categoryName}</span>
+                            <span className="block w-16 h-1 bg-[#0AB9C6] mx-auto mt-3 rounded-full"></span>
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                            {allCategorizedProducts[categoryName].map((product) => (
+                                <div key={product.id} className="bg-white rounded-xl shadow-xl overflow-hidden group border-t-4 border-purple-200"> {/* Enhanced shadow and added border */}
+                                    <img
+                                        src={product.src}
+                                        alt={product.name}
+                                        className="w-full h-60 object-cover object-center transform transition duration-300 group-hover:scale-105"
+                                    />
+                                    <div className="p-5 text-center">
+                                        <h4 className="text-xl font-semibold text-gray-900 mb-2 font-playfair">{product.name}</h4> {/* Applied Playfair Display */}
+                                        <p className="text-lg font-bold text-[#0AB9C6] mb-3">{product.price}</p>
+                                        <button
+                                            onClick={() => { /* Placeholder for add to cart / quick view */ }}
+                                            className="bg-[#0AB9C6] hover:bg-[#089AA6] text-white font-semibold py-2 px-5 rounded-full transition duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center mx-auto space-x-2"
+                                        >
+                                            <ShoppingBag className="w-5 h-5" />
+                                            <span>Add to Cart</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))}
             </div>
-          ))}
-        </div>
-        <p className="text-center text-gray-600 text-sm mt-12">
-          (Note: For purchase inquiries, clicking "Buy on WhatsApp" will open a chat with us, ready for your screenshot!)
-        </p>
-      </div>
-    </section>
-  );
+        </section>
+    );
 };
 
 
@@ -1303,12 +1459,12 @@ const AppointmentPage = ({ setCurrentPage }) => {
 
 // Login Form Component
 const LoginForm = ({ onLogin, error }) => {
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState(''); // Changed back to username as per user's code
   const [password, setPassword] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onLogin(username, password);
+    onLogin(username, password); // Pass username to onLogin
   };
 
   return (
@@ -1319,7 +1475,7 @@ const LoginForm = ({ onLogin, error }) => {
           <div>
             <label htmlFor="username" className="block text-left text-gray-700 text-lg font-medium mb-2">Username:</label>
             <input
-              type="text"
+              type="text" // Type changed back to text as per user's code
               id="username"
               className="w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0AB9C6] focus:border-transparent transition duration-200 text-lg"
               value={username}
@@ -1347,15 +1503,15 @@ const LoginForm = ({ onLogin, error }) => {
           </button>
         </form>
         <p className="text-sm text-gray-500 mt-6">
-          (Hint: Try username "admin" and password "password")
+          (Hint: Try username "work.sakshamtalwar@gmail.com" and password "ABhp@28112003") {/* Updated hint */}
         </p>
       </div>
     </section>
   );
 };
 
-// Admin Dashboard Component (Placeholder)
-const AdminDashboard = () => {
+// Admin Dashboard Component (Reverted to placeholder functionality, Firebase-related admin features removed)
+const AdminDashboard = () => { // userId prop removed as Firebase auth is not used
   return (
     <section className="py-24 px-6 md:px-12 bg-gradient-to-br from-green-50 to-blue-50 min-h-screen mt-[88px]">
       <div className="max-w-4xl mx-auto bg-white p-10 rounded-xl shadow-2xl text-center border-t-4 border-green-500">
@@ -1363,7 +1519,7 @@ const AdminDashboard = () => {
         <p className="text-lg text-gray-700 mb-10 leading-relaxed">
           This is your exclusive dashboard. Here you can manage various aspects of your website.
           **Note:** Full functionality for managing products or editing website content would require a secure backend
-          database (e.g., Firestore) and API integration for data persistence. This demonstration focuses on the UI
+          database and API integration for data persistence. This demonstration focuses on the UI
           and client-side routing aspect of an admin panel.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -1680,4 +1836,3 @@ const FAQsPage = ({ scrollToAI, setScrollToAI }) => {
 };
 
 export default App;
-  
