@@ -1,40 +1,400 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 // Lucide React for icons
-import { Home, Info, Briefcase, Image, MessageCircle, Mail, MapPin, Phone, Clock, X,Minus, Plus, PawPrint, ShoppingBag, Bot, ArrowUpCircle } from 'lucide-react';
+import { Home, Info, Briefcase, Image, MessageCircle, Mail, MapPin, Phone, Clock, X, PawPrint, Scissors, Droplet, Bug, Handshake, Monitor, Plus, Minus, BookOpen, MessageSquare, ShoppingBag, Bot, ArrowUpCircle, User, Edit, Trash2, PlusCircle } from 'lucide-react';
 
-// --- Static Data (Replaces Firestore for Products and Categories) ---
-const staticProductsData = [
-  { id: 'p1', name: 'Premium Dog Food', description: 'Nutritious and balanced diet for all dog breeds.', price: '1200', imageUrl: 'https://placehold.co/400x300/F0F8FF/000000?text=Dog+Food', category: 'Food' },
-  { id: 'p2', name: 'Interactive Cat Toy', description: 'Keeps your cat engaged and entertained for hours.', price: '350', imageUrl: 'https://placehold.co/400x300/FFF0F5/000000?text=Cat+Toy', category: 'Toys' },
-  { id: 'p3', name: 'Comfort Pet Bed', description: 'Soft and cozy bed for ultimate pet relaxation.', price: '2500', imageUrl: 'https://placehold.co/400x300/F5FFFA/000000?text=Pet+Bed', category: 'Accessories' },
-  { id: 'p4', name: 'Durable Dog Leash', description: 'Strong and comfortable leash for daily walks.', price: '450', imageUrl: 'https://placehold.co/400x300/F8F8FF/000000?text=Dog+Leash', category: 'Accessories' },
-  { id: 'p5', name: 'Cat Scratching Post', description: 'Protects furniture and satisfies scratching instincts.', price: '900', imageUrl: 'https://placehold.co/400x300/F0FFFF/000000?text=Scratch+Post', category: 'Accessories' },
-  { id: 'p6', name: 'Pet Grooming Brush', description: 'Removes loose fur and keeps coat shiny.', price: '280', imageUrl: 'https://placehold.co/400x300/F0FDFD/000000?text=Grooming+Brush', category: 'Grooming' },
-  { id: 'p7', name: 'Small Animal Carrier', description: 'Safe and comfortable travel carrier for small pets.', price: '1800', imageUrl: 'https://placehold.co/400x300/E0FFFF/000000?text=Pet+Carrier', category: 'Travel' },
-  { id: 'p8', name: 'Waterproof Dog Coat', description: 'Keeps your dog dry and warm in wet weather.', price: '750', imageUrl: 'https://placehold.co/400x300/ADD8E6/000000?text=Dog+Coat', category: 'Apparel' },
-  { id: 'p9', name: 'Bird Seed Mix', description: 'Nutrient-rich food mix for various bird species.', price: '600', imageUrl: 'https://placehold.co/400x300/B0E0E6/000000?text=Bird+Food', category: 'Food' },
-  { id: 'p10', name: 'Fish Tank Decor', description: 'Adds beauty and shelter to your aquarium.', price: '200', imageUrl: 'https://placehold.co/400x300/87CEFA/000000?text=Fish+Decor', category: 'Aquatic' },
-  { id: 'p11', name: 'Rabbit Hay Pellets', description: 'High-fiber diet essential for rabbit digestion.', price: '400', imageUrl: 'https://placehold.co/400x300/6A5ACD/000000?text=Rabbit+Food', category: 'Food' },
-  { id: 'p12', name: 'Hamster Wheel', description: 'Provides essential exercise for small rodents.', price: '150', imageUrl: 'https://placehold.co/400x300/7B68EE/000000?text=Hamster+Wheel', category: 'Toys' },
-  { id: 'p13', name: 'Premium Cat Litter', description: 'Superior odor control and clumping for cat litter boxes.', price: '700', imageUrl: 'https://placehold.co/400x300/C6E2FF/000000?text=Cat+Litter', category: 'Hygiene' },
-  { id: 'p14', name: 'Dog Training Clicker', description: 'Effective tool for positive reinforcement training.', price: '100', imageUrl: 'https://placehold.co/400x300/B0C4DE/000000?text=Training+Clicker', category: 'Training' },
-  { id: 'p15', name: 'Aquarium Filter', description: 'Keeps aquarium water clean and clear.', price: '950', imageUrl: 'https://placehold.co/400x300/ADD8E6/000000?text=Aquarium+Filter', category: 'Aquatic' },
-];
+// Firebase imports
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from 'firebase/auth';
+import { getFirestore, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query } from 'firebase/firestore';
 
-const staticCategoriesData = [
-  { id: 'c1', name: 'Food' },
-  { id: 'c2', name: 'Toys' },
-  { id: 'c3', name: 'Accessories' },
-  { id: 'c4', name: 'Grooming' },
-  { id: 'c5', name: 'Travel' },
-  { id: 'c6', name: 'Apparel' },
-  { id: 'c7', name: 'Aquatic' },
-  { id: 'c8', name: 'Hygiene' },
-  { id: 'c9', name: 'Training' },
-];
+const App = () => {
+  // State for current page, used for simple routing
+  const [currentPage, setCurrentPage] = useState('home');
+  // State for tracking if AI section should be scrolled into view
+  const [scrollToAI, setScrollToAI] = useState(false);
+  // State for scroll-to-top button visibility
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  // State for controlling the loading screen
+  const [isLoading, setIsLoading] = useState(true);
+  const [fadeEffect, setFadeEffect] = useState('fade-in');
+  
+  // State for AI prompt visibility (retained from user's provided code)
+  const [showAiPrompt, setShowAiPrompt] = useState(true);
 
-// --- Component Definitions ---
+  // Firebase states
+  const [db, setDb] = useState(null);
+  const [auth, setAuth] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [isAuthReady, setIsAuthReady] = useState(false); // To ensure Firestore operations wait for auth
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loginError, setLoginError] = useState('');
+
+  // State for products (now managed by Firestore)
+  const [products, setProducts] = useState([]);
+
+  // Firebase configuration - directly provided by the user
+  const firebaseConfig = {
+    apiKey: "AIzaSyC6SeT6-MJecF6UO7Sckz-KTM2DUtIfgb8",
+    authDomain: "abshappypaws-5bd10.firebaseapp.com",
+    projectId: "abshappypaws-5bd10",
+    storageBucket: "abshappypaws-5bd10.firebasestorage.app",
+    messagingSenderId: "214188952783",
+    appId: "1:214188952783:web:147ecddfe195a7279bbbba",
+    measurementId: "G-ZGR7EM7DJ5"
+  };
+
+  // Extract projectId as appId for Firestore path
+  const appId = firebaseConfig.projectId;
+
+  // Since initialAuthToken is not provided in firebaseConfig, set it to null
+  const initialAuthToken = null;
+
+  // Firebase Initialization and Auth State Listener
+  useEffect(() => {
+    // Define the admin email. Make sure this matches the email you use for admin login.
+    const adminEmail = "salesabshappypaws@gmail.com"; 
+  
+
+    try {
+      // Initialize Firebase app
+      const app = initializeApp(firebaseConfig);
+      // Get Auth and Firestore instances
+      const authInstance = getAuth(app);
+      const firestoreInstance = getFirestore(app);
+      
+      // Set these instances to state so other parts of the component can use them
+      setDb(firestoreInstance);
+      setAuth(authInstance);
+
+      // Listen for authentication state changes
+      const unsubscribe = onAuthStateChanged(authInstance, async (user) => {
+        if (user) {
+          setUserId(user.uid);
+          
+          let userIsAdmin = false;
+          // Check if the authenticated user's email matches the admin email
+          if (user.email === adminEmail) {
+            userIsAdmin = true;
+          }
+
+          // Fetch or create user document in Firestore
+          // The path for private user data is: artifacts/{appId}/users/{userId}/
+          const userDocRef = doc(firestoreInstance, `artifacts/${appId}/users/${user.uid}`);
+          const userDocSnap = await getDoc(userDocRef);
+
+          if (userDocSnap.exists()) {
+            // If document exists, use its isAdmin status from Firestore
+            // But override if the current user's email is the designated admin email.
+            const firestoreIsAdmin = userDocSnap.data().isAdmin || false;
+            setIsAdmin(firestoreIsAdmin || userIsAdmin); // Prioritize explicit admin email
+            
+            // If the user is identified as admin by email but Firestore doesn't reflect it, update Firestore
+            if (userIsAdmin && !firestoreIsAdmin) {
+              await setDoc(userDocRef, { isAdmin: true }, { merge: true });
+            }
+          } else {
+            // If document doesn't exist (e.g., first anonymous sign-in or new email login), create it
+            // Set isAdmin based on whether the email matches the adminEmail
+            await setDoc(userDocRef, { isAdmin: userIsAdmin }, { merge: true });
+            setIsAdmin(userIsAdmin);
+          }
+        } else {
+          setUserId(null);
+          setIsAdmin(false);
+        }
+        setIsAuthReady(true); // Auth state is now ready, allowing Firestore operations
+      });
+
+      // Sign in with custom token if provided by Canvas, otherwise sign in anonymously
+      const signIn = async () => {
+        try {
+          if (initialAuthToken) {
+            await signInWithCustomToken(authInstance, initialAuthToken);
+          } else {
+            // Only sign in anonymously if no user is currently authenticated
+            if (!authInstance.currentUser) {
+              await signInAnonymously(authInstance);
+            }
+          }
+        } catch (error) {
+          console.error("Firebase anonymous sign-in or custom token sign-in error:", error);
+          // Handle specific errors like 'auth/invalid-custom-token' if needed
+          // You might want to display a user-friendly message for sign-in issues
+        }
+      };
+      signIn(); // Call the sign-in function immediately
+
+      // Cleanup function for the auth state listener
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Firebase initialization error:", error);
+      // You might want to display a user-facing error message here if Firebase fails to initialize
+    }
+  }, [appId, firebaseConfig, initialAuthToken]); // Dependencies for useEffect: ensuring it re-runs if these change (though they typically won't)
+
+
+  // Effect for the loading screen animation
+  useEffect(() => {
+    // Start fade out after 1.5 seconds
+    const fadeOutTimer = setTimeout(() => {
+      setFadeEffect('fade-out');
+    }, 1500);
+
+    // Hide loading screen completely after fade out animation (total 2 seconds)
+    const hideLoaderTimer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000); // Matches CSS transition duration + fadeOutTimer
+
+    return () => {
+      clearTimeout(fadeOutTimer);
+      clearTimeout(hideLoaderTimer);
+    };
+  }, []);
+
+  // Effect to handle scroll-to-top button visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) { // Show button after scrolling 300px
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  // Effect for AI prompt visibility (retained from user's provided code)
+  useEffect(() => {
+    // Show prompt for 5 seconds on initial load, then hide
+    const promptTimer = setTimeout(() => {
+      setShowAiPrompt(false);
+    }, 5000); // Hide after 5 seconds
+
+    return () => clearTimeout(promptTimer);
+  }, []);
+
+  const handleAIShortcutClick = () => {
+    setCurrentPage('faqs');
+    setShowAiPrompt(false); // Hide prompt if user clicks the button
+    // Use a timeout to allow the page to render before scrolling
+    setTimeout(() => {
+      setScrollToAI(true); // Signal FAQsPage to scroll to AI section
+    }, 100); // Small delay
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top on navigation
+  };
+
+  const handlePageChangeAndScrollToTop = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top on navigation
+  };
+
+  const handleScrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Login handler with Firebase authentication
+  const handleLogin = async (email, password) => {
+    setLoginError(''); // Clear previous errors
+    if (!auth) {
+      setLoginError('Firebase authentication not initialized.');
+      return false;
+    }
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      setLoginError(''); // Clear error on successful login
+      // isAdmin state will be updated by the onAuthStateChanged listener
+      setCurrentPage('admin-dashboard'); // Redirect to admin dashboard on successful login
+      return true;
+    } catch (error) {
+      console.error("Login error:", error);
+      setLoginError(`Login failed: ${error.message}`);
+      return false;
+    }
+  };
+
+  // Logout handler with Firebase authentication
+  const handleLogout = async () => {
+    if (auth) {
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error("Logout error:", error);
+      }
+    }
+    // isLoggedIn and isAdmin states will be reset by the onAuthStateChanged listener
+    setCurrentPage('home'); // Redirect to home page on logout
+  };
+
+  // Handler to close the AI prompt manually.
+  const handleCloseAiPrompt = () => {
+    setShowAiPrompt(false);
+  };
+
+  // Helper function to render different pages based on state
+  const renderPage = () => {
+    if (currentPage === 'login') {
+      return <LoginForm onLogin={handleLogin} error={loginError} />;
+    }
+    // Admin dashboard protected by isAdmin state
+    if (currentPage === 'admin-dashboard') {
+      if (isAuthReady && isAdmin) { // Only show if auth is ready AND user is admin
+        return <AdminDashboard db={db} userId={userId} isAuthReady={isAuthReady} products={products} setProducts={setProducts} appId={appId} />;
+      } else if (isAuthReady && !isAdmin) { // Show unauthorized if auth is ready but not admin
+        return (
+          <div className="py-24 px-6 md:px-12 bg-red-100 min-h-screen text-center flex flex-col items-center justify-center mt-[88px]">
+            <h2 className="text-4xl font-bold text-red-700 mb-4 font-playfair">Unauthorized Access</h2>
+            <p className="text-lg text-red-600 mb-8">You do not have permission to access the Admin Dashboard. Please log in with admin credentials.</p>
+            <button
+              onClick={() => setCurrentPage('home')}
+              className="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95"
+            >
+              Go to Home
+            </button>
+          </div>
+        );
+      } else { // Show loading if auth is not ready yet
+        return (
+          <div className="py-24 px-6 md:px-12 bg-gray-100 min-h-screen text-center flex flex-col items-center justify-center mt-[88px]">
+            <h2 className="text-4xl font-bold text-gray-700 mb-4 font-playfair">Loading Authentication...</h2>
+            <p className="text-lg text-gray-600 mb-8">Please wait while we verify your access.</p>
+          </div>
+        );
+      }
+    }
+    
+    switch (currentPage) {
+      case 'home':
+        return <HomePage setCurrentPage={handlePageChangeAndScrollToTop} />;
+      case 'about':
+        return <AboutPage setCurrentPage={handlePageChangeAndScrollToTop} />;
+      case 'services':
+        return <ServicesPage setCurrentPage={handlePageChangeAndScrollToTop} />;
+      case 'products':
+        return <ProductsPage products={products} setCurrentPage={handlePageChangeAndScrollToTop} />; // Pass products to ProductsPage
+      case 'product-gallery':
+        return <ProductGalleryPage products={products} setCurrentPage={handlePageChangeAndScrollToTop} />; // Pass products to ProductGalleryPage
+      case 'gallery':
+        return <GalleryPage />;
+      case 'testimonials':
+        return <TestimonialsPage setCurrentPage={handlePageChangeAndScrollToTop} />;
+      case 'appointment':
+        return <AppointmentPage setCurrentPage={handlePageChangeAndScrollToTop} />;
+      case 'faqs':
+        return <FAQsPage scrollToAI={scrollToAI} setScrollToAI={setScrollToAI} />;
+      default:
+        return <HomePage setCurrentPage={handlePageChangeAndScrollToTop} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col font-lato bg-gray-50 text-gray-800">
+      {isLoading && <LoadingScreen fadeEffect={fadeEffect} />}
+
+      <div className={`transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
+        <Navbar
+          setCurrentPage={handlePageChangeAndScrollToTop}
+          currentPage={currentPage}
+          isLoggedIn={userId !== null} // Check if userId exists for isLoggedIn
+          isAdmin={isAdmin}
+          onLogout={handleLogout}
+        />
+        <main className="flex-grow">
+          {renderPage()}
+        </main>
+        <Footer />
+
+        {/* Floating AI Assistant Shortcut Button and Prompt */}
+        <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50">
+          <button
+            onClick={handleAIShortcutClick}
+            className="bg-[#0AB9C6] hover:bg-[#089AA6] text-white p-4 rounded-full shadow-lg transition duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center group relative"
+            aria-label="Talk to AI Assistant"
+          >
+            <PawPrint className="h-6 w-6 relative" />
+            <Bot className="h-4 w-4 absolute top-1 right-1 text-yellow-300 group-hover:text-white transition-colors duration-300" />
+          </button>
+          {showAiPrompt && (
+            <div className="absolute bottom-full right-0 mb-4 mr-4 p-1 bg-[#0AB9C6] text-white text-sm rounded-md shadow-md opacity-100 animate-fadeInRight max-w-[250px] text-center flex items-center justify-between">
+              <span>Click here to talk to pet AI assistant!</span>
+              <button
+                onClick={handleCloseAiPrompt} // Close button for AI prompt
+                className="ml-2 p-1 rounded-full hover:bg-yellow-700 transition-colors duration-400"
+                aria-label="Close AI prompt"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+              {/* Arrow for the tooltip */}
+              <div className="absolute top-full right-4 w-0 h-0 border-t-[6px] border-l-[6px] border-r-[6px] border-t-[#0AB9C6] border-l-transparent border-r-transparent transform -translate-x-1/2"></div>
+            </div>
+          )}
+        </div>
+
+
+        {/* Floating Social Media Buttons (retained from user's provided code) */}
+        <div className="fixed bottom-4 left-4 md:bottom-6 md:left-6 flex flex-col space-y-3 z-50">
+            <a
+                href="https://www.facebook.com/share/1EDmkyYRoj/" // Replace with actual Facebook page URL
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center"
+                aria-label="Visit our Facebook page"
+            >
+                {/* Facebook SVG Icon */}
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="w-6 h-6"
+                >
+                    <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm3 8h-1.353c-.562 0-.671.29-.671.659v1.841h2.545l-.42 2.736h-2.125v6.529h-3v-6.529h-2.133v-2.736h2.133v-1.91c0-2.163 1.054-3.478 3.427-3.478h2.215v3z"/>
+                </svg>
+            </a>
+            <a
+                href="https://www.instagram.com/abhappypaws?igsh=MXY0OGJhZGl4YWRqZA==" // Replace with actual Instagram page URL
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-pink-600 hover:bg-pink-700 text-white p-3 rounded-full shadow-lg transition duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center"
+                aria-label="Visit our Instagram page"
+            >
+                {/* Instagram SVG Icon */}
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="w-6 h-6"
+                >
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.585-.012-4.85-.07c-3.254-.148-4.77-1.691-4.919-4.919-.058-1.265-.07-1.646-.07-4.85s.012-3.585.07-4.85c.149-3.227 1.664-4.771 4.919-4.919 1.266-.058 1.644-.07 4.85-.07zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.073 4.948.073s3.668-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+            </a>
+        </div>
+
+
+        {/* Scroll-to-Top Button */}
+        {showScrollTop && (
+          <button
+            onClick={handleScrollToTop}
+            className="fixed bottom-20 right-4 md:bottom-24 md:right-6 bg-gray-700 hover:bg-gray-800 text-white p-3 rounded-full shadow-lg transition duration-300 transform hover:scale-110 active:scale-95 z-40"
+            aria-label="Scroll to top"
+          >
+            <ArrowUpCircle className="h-6 w-6" />
+          </button>
+        )}
+
+        {/* Live Time IST - Positioned below navbar */}
+        <LiveTimeIST />
+      </div>
+    </div>
+  );
+};
 
 // Loading Screen Component
 const LoadingScreen = ({ fadeEffect }) => {
@@ -90,8 +450,9 @@ const LiveTimeIST = () => {
   );
 };
 
+
 // Navbar Component
-const Navbar = ({ setCurrentPage, currentPage }) => {
+const Navbar = ({ setCurrentPage, currentPage, isLoggedIn, isAdmin, onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
   const whatsappNumber = '918660764838'; // Consistent WhatsApp number
 
@@ -99,13 +460,9 @@ const Navbar = ({ setCurrentPage, currentPage }) => {
     { name: 'Home', icon: Home, page: 'home' },
     { name: 'Services', icon: Briefcase, page: 'services' },
     { name: 'Products', icon: ShoppingBag, page: 'products' },
-    { name: 'FAQs', icon: MessageCircle, page: 'faqs' },
+    { name: 'FAQs', icon: MessageSquare, page: 'faqs' },
     { name: 'Appointment', icon: Mail, page: 'appointment' },
   ];
-
-  const handleAdminClick = () => {
-    alert("Admin features will be coming soon!"); // Alert message
-  };
 
   return (
     <nav className="bg-white/70 backdrop-blur-md shadow-lg py-4 px-6 md:px-12 flex justify-between items-center fixed w-full z-50 rounded-b-lg border-b border-gray-100">
@@ -133,15 +490,16 @@ const Navbar = ({ setCurrentPage, currentPage }) => {
             <span>{item.name}</span>
           </button>
         ))}
-        {/* Admin Panel Button */}
-        <button
-          className="flex items-center space-x-2 text-lg font-semibold px-3 py-2 rounded-md transition-all duration-300
-            text-gray-700 hover:text-[#0AB9C6] hover:bg-gray-50"
-          onClick={handleAdminClick}
-        >
-          <Image className="w-5 h-5" /> {/* Using Image icon for now, as Monitor was admin-specific */}
-          <span>Admin Panel</span>
-        </button>
+        {isAdmin && (
+          <button
+            className={`flex items-center space-x-2 text-lg font-semibold px-3 py-2 rounded-md transition-all duration-300
+              ${currentPage === 'admin-dashboard' ? 'text-[#0AB9C6] bg-gray-100' : 'text-gray-700 hover:text-[#0AB9C6] hover:bg-gray-50'}`}
+            onClick={() => setCurrentPage('admin-dashboard')}
+          >
+            <Monitor className="w-5 h-5" />
+            <span>Admin Panel</span>
+          </button>
+        )}
         <a
           href={`https://wa.me/${whatsappNumber}`} // WhatsApp link for "Talk to Us"
           target="_blank"
@@ -151,6 +509,23 @@ const Navbar = ({ setCurrentPage, currentPage }) => {
           <Phone className="w-5 h-5" />
           <span>Talk to Us</span>
         </a>
+        {!isLoggedIn ? (
+          <button
+            onClick={() => setCurrentPage('login')}
+            className="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2.5 px-6 rounded-full shadow-md transition duration-300 transform hover:scale-105 active:scale-95 flex items-center space-x-2"
+          >
+            <User className="w-5 h-5" />
+            <span>Login as Admin</span>
+          </button>
+        ) : (
+          <button
+            onClick={onLogout}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-6 rounded-full shadow-md transition duration-300 transform hover:scale-105 active:scale-95 flex items-center space-x-2"
+          >
+            <User className="w-5 h-5" />
+            <span>Logout (Admin)</span>
+          </button>
+        )}
       </div>
 
       {/* Mobile Menu Button */}
@@ -183,15 +558,19 @@ const Navbar = ({ setCurrentPage, currentPage }) => {
               {item.name}
             </button>
           ))}
-          {/* Admin Panel Button for mobile */}
-          <button
-            className="block w-full text-left px-6 py-3 text-lg font-medium hover:bg-gray-100 transition-colors duration-200
-            text-gray-700"
-            onClick={() => { handleAdminClick(); setIsOpen(false); }}
-          >
-            <Image className="inline-block w-5 h-5 mr-3" />
-            <span>Admin Panel</span>
-          </button>
+          {isAdmin && (
+            <button
+              className={`block w-full text-left px-6 py-3 text-lg font-medium hover:bg-gray-100 transition-colors duration-200
+                ${currentPage === 'admin-dashboard' ? 'text-[#0AB9C6] bg-gray-100' : 'text-gray-700'}`}
+              onClick={() => {
+                setCurrentPage('admin-dashboard');
+                setIsOpen(false);
+              }}
+            >
+              <Monitor className="inline-block w-5 h-5 mr-3" />
+              <span>Admin Panel</span>
+            </button>
+          )}
           <a
             href={`https://wa.me/${whatsappNumber}`} // WhatsApp link for "Talk to Us"
             target="_blank"
@@ -201,6 +580,23 @@ const Navbar = ({ setCurrentPage, currentPage }) => {
             <Phone className="inline-block w-5 h-5 mr-3" />
             Talk to Us
           </a>
+          {!isLoggedIn ? (
+            <button
+              onClick={() => { setCurrentPage('login'); setIsOpen(false); }}
+              className="block w-full text-left px-6 py-3 text-lg font-medium bg-gray-700 text-white hover:bg-gray-800 transition-colors duration-200 mt-2 rounded-full mx-6 md:mx-auto"
+            >
+              <User className="inline-block w-5 h-5 mr-3" />
+              <span>Login as Admin</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => { onLogout(); setIsOpen(false); }}
+              className="block w-full text-left px-6 py-3 text-lg font-medium bg-red-600 text-white hover:bg-red-700 transition-colors duration-200 mt-2 rounded-full mx-6 md:mx-auto"
+            >
+              <User className="inline-block w-5 h-5 mr-3" />
+              <span>Logout (Admin)</span>
+            </button>
+          )}
         </div>
       )}
     </nav>
@@ -523,7 +919,7 @@ const HomePage = ({ setCurrentPage }) => {
             From nutritious food to fun toys and comfortable accessories, find everything your pet needs for a happy and healthy life.
           </p>
           <button
-            onClick={() => setCurrentPage('products')} // Navigate to Products Page (which now has max 12 products)
+            onClick={() => setCurrentPage('product-gallery')} // Navigate to new Product Gallery Page
             className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center mx-auto space-x-2"
           >
             <ShoppingBag className="w-5 h-5" />
@@ -603,7 +999,7 @@ const HomePage = ({ setCurrentPage }) => {
   );
 };
 
-// About Page Component
+// About Page Component (Unchanged from previous)
 const AboutPage = ({ setCurrentPage }) => {
   const qualities = [
     { name: 'Expert Groomers', description: 'Our team comprises highly trained and certified professionals.' },
@@ -683,7 +1079,7 @@ const AboutPage = ({ setCurrentPage }) => {
           <p className="text-lg text-gray-700 mb-8">
             100% Safe for Your Beloved Pets. Gentle, expert care with guaranteed well-being. Trust our dedicated team!
           </p>
-          <button className="bg-[#0AB9C6] hover:bg-[#089AA6] text-white font-semibold py-3 px-8 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95" onClick={() => setCurrentPage('appointment')}>
+          <button className="bg-[#0AB9C6] hover:bg-[#089AA6] text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95" onClick={() => setCurrentPage('appointment')}>
             Book Appointment
           </button>
         </div>
@@ -816,25 +1212,18 @@ const ServicesPage = ({ setCurrentPage }) => {
 };
 
 // Products Page Component: Displays a preview of products with categories.
-const ProductsPage = ({ products, categories, setCurrentPage }) => {
+const ProductsPage = ({ products, setCurrentPage }) => {
     const [activeCategory, setActiveCategory] = useState('All');
-    const whatsappNumber = '918660764838'; // Consistent WhatsApp number
 
-    // Limit products to 12 for the main products page preview (max 10-15)
-    const limitedProducts = products.slice(0, 12);
+    // Dynamically get categories from the products data
+    const categories = ['All', ...new Set(products.map(p => p.category))].filter(Boolean); // Filter out undefined/null categories
 
     // Filter products based on the active category
     const productsToDisplay = activeCategory === 'All'
-        ? limitedProducts
-        : limitedProducts.filter(p => p.category === activeCategory);
+        ? products
+        : products.filter(p => p.category === activeCategory);
 
-    const googlePhotosAlbumUrl = "https://photos.app.goo.gl/KvdnXpJVZDqzF1rHA"; // Your Google Photos album link
-
-    // Function to generate WhatsApp link
-    const generateWhatsAppLink = (product) => {
-      const message = `Hello, I'm interested in ordering the product: ${product.name} (Price: ₹${product.price}). Can you please tell me more or help me place an order?`;
-      return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-    };
+    const googlePhotosAlbumUrl = "https://photos.app.goo.gl/KvdnXpJVZDqzF1rHA"; // Replace with your actual Google Photos album link
 
     return (
         <section className="py-24 px-6 md:px-12 bg-white mt-[88px]">
@@ -862,8 +1251,7 @@ const ProductsPage = ({ products, categories, setCurrentPage }) => {
 
                 {/* Category Navigation */}
                 <div className="flex flex-wrap justify-center gap-4 mb-12">
-                    {/* Ensure 'All' is always the first option, then map other categories from state */}
-                    {['All', ...categories.map(cat => cat.name)].map((category) => (
+                    {categories.map((category) => (
                         <button
                             key={category}
                             onClick={() => setActiveCategory(category)}
@@ -885,17 +1273,12 @@ const ProductsPage = ({ products, categories, setCurrentPage }) => {
                             <div className="p-7 flex-grow">
                                 <h3 className="text-2xl font-bold text-gray-900 mb-3 font-playfair">{product.name}</h3>
                                 <p className="text-gray-700 leading-relaxed text-base mb-4">{product.description}</p>
-                                <p className="text-xl font-bold text-[#0AB9C6]">₹{product.price}</p>
+                                <p className="text-xl font-bold text-[#0AB9C6]">{product.price}</p>
                             </div>
                             <div className="p-7 pt-0">
-                                <a
-                                  href={generateWhatsAppLink(product)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block w-full bg-[#0AB9C6] hover:bg-[#089AA6] text-white font-bold py-3 px-4 rounded-full text-center transition duration-300 transform hover:scale-105 active:scale-95"
-                                >
-                                  Order This
-                                </a>
+                                <button className="bg-[#0AB9C6] hover:bg-[#089AA6] text-white font-semibold py-2 px-6 rounded-full transition duration-300 transform hover:scale-105 active:scale-95">
+                                    Add to Cart
+                                </button>
                             </div>
                         </div>
                     ))}
@@ -914,8 +1297,8 @@ const ProductsPage = ({ products, categories, setCurrentPage }) => {
 };
 
 // New Product Gallery Page Component
-const ProductGalleryPage = ({ products, categories, setCurrentPage }) => {
-    const whatsappNumber = '918660764838'; // Consistent WhatsApp number
+const ProductGalleryPage = ({ products, setCurrentPage }) => {
+    const googlePhotosAlbumUrl = "https://photos.app.goo.gl/YourGooglePhotosAlbumLinkHere"; // Replace with your actual Google Photos album link
 
     // Group products by category
     const categorizedProducts = products.reduce((acc, product) => {
@@ -927,14 +1310,6 @@ const ProductGalleryPage = ({ products, categories, setCurrentPage }) => {
       return acc;
     }, {});
 
-    const googlePhotosAlbumUrl = "https://photos.app.goo.gl/KvdnXpJVZDqzF1rHA"; // Your Google Photos album link
-
-    // Function to generate WhatsApp link
-    const generateWhatsAppLink = (product) => {
-      const message = `Hello, I'm interested in ordering the product: ${product.name} (Price: ₹${product.price}). Can you please tell me more or help me place an order?`;
-      return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-    };
-
     return (
         <section className="py-24 px-6 md:px-12 bg-gradient-to-br from-pink-50 to-purple-50 mt-[88px]">
             <div className="max-w-7xl mx-auto">
@@ -943,7 +1318,7 @@ const ProductGalleryPage = ({ products, categories, setCurrentPage }) => {
                     <span className="block w-20 h-1 bg-[#0AB9C6] mx-auto mt-4 rounded-full"></span>
                 </h2>
                 <p className="text-center text-lg text-gray-700 mb-12 max-w-3xl mx-auto leading-relaxed">
-                    Browse through our complete collection of premium pet products. See something you like? Click "Order This" to inquire!
+                    Browse through our complete collection of premium pet products. See something you like? Click "Buy on WhatsApp" to inquire!
                 </p>
 
                 {/* Google Photos Album Button */}
@@ -975,16 +1350,14 @@ const ProductGalleryPage = ({ products, categories, setCurrentPage }) => {
                                     />
                                     <div className="p-5 text-center">
                                         <h4 className="text-xl font-semibold text-gray-900 mb-2 font-playfair">{product.name}</h4> {/* Applied Playfair Display */}
-                                        <p className="text-lg font-bold text-[#0AB9C6] mb-3">₹{product.price}</p>
-                                        <a
-                                            href={generateWhatsAppLink(product)}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                        <p className="text-lg font-bold text-[#0AB9C6] mb-3">{product.price}</p>
+                                        <button
+                                            onClick={() => { /* Placeholder for add to cart / quick view */ }}
                                             className="bg-[#0AB9C6] hover:bg-[#089AA6] text-white font-semibold py-2 px-5 rounded-full transition duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center mx-auto space-x-2"
                                         >
                                             <ShoppingBag className="w-5 h-5" />
-                                            <span>Order This</span>
-                                        </a>
+                                            <span>Add to Cart</span>
+                                        </button>
                                     </div>
                                 </div>
                             ))}
@@ -997,7 +1370,7 @@ const ProductGalleryPage = ({ products, categories, setCurrentPage }) => {
 };
 
 
-// Gallery Page Component
+// Gallery Page Component (Fixed: Removed setCurrentPage prop as it's not used)
 const GalleryPage = () => {
   const images = [
     'https://placehold.co/600x400/afeeee/000000?text=Happy+Pet+1',
@@ -1039,7 +1412,7 @@ const GalleryPage = () => {
   );
 };
 
-// Testimonials Page Component
+// Testimonials Page Component (Updated to accept setCurrentPage)
 const TestimonialsPage = ({ setCurrentPage }) => {
   const testimonials = [
     {
@@ -1146,7 +1519,7 @@ const AppointmentPage = ({ setCurrentPage }) => {
     window.location.href = `tel:${whatsappNumber}`; // Uses tel: for direct call
   };
 
-  const googleFormUrl = "https://docs.google.com/forms/d/e/1FAIpQLScOUuO7Fww0-EG_4Z5KRHVqyL8UeiFx3Jcbkd9NHaCqGEMZWw/viewform?fbzx=594263218296675704&pli=1";
+  const googleFormUrl = "https://docs.google.com/forms/d/e/1FAIpQLScOUuO7Fww0-EG_4Z5KRHVqyL8UeiFx3Jcbkd9NHaCqGEMZWw/viewform?fbzx=594263218296675704&pli=1  ";
 
   return (
     <section className="py-24 px-6 md:px-12 bg-white mt-[88px]"> {/* Adjusted mt for navbar clearance */}
@@ -1237,6 +1610,409 @@ const AppointmentPage = ({ setCurrentPage }) => {
     </section>
   );
 };
+
+// Login Form Component
+const LoginForm = ({ onLogin, error }) => {
+  const [email, setEmail] = useState(''); // Changed to email for Firebase Auth
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onLogin(email, password); // Pass email to onLogin
+  };
+
+  return (
+    <section className="py-24 px-6 md:px-12 bg-gradient-to-br from-blue-100 to-indigo-100 min-h-screen flex items-center justify-center mt-[88px]">
+      <div className="bg-white p-10 rounded-xl shadow-2xl w-full max-w-md text-center border-t-4 border-[#0AB9C6]">
+        <h2 className="text-4xl font-bold text-gray-900 mb-8 font-playfair">Admin <span className="text-[#0AB9C6]">Login</span></h2>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="email" className="block text-left text-gray-700 text-lg font-medium mb-2">Email:</label>
+            <input
+              type="email" // Type changed to email
+              id="email"
+              className="w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0AB9C6] focus:border-transparent transition duration-200 text-lg"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="block text-left text-gray-700 text-lg font-medium mb-2">Password:</label>
+            <input
+              type="password"
+              id="password"
+              className="w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0AB9C6] focus:border-transparent transition duration-200 text-lg"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          {error && <p className="text-red-600 text-base mt-4">{error}</p>}
+          <button
+            type="submit"
+            className="w-full bg-[#0AB9C6] hover:bg-[#089AA6] text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95 text-lg"
+          >
+            Login
+          </button>
+        </form>
+        {/* Removed hardcoded hint as credentials will be managed via Firebase Auth */}
+      </div>
+    </section>
+  );
+};
+
+// Custom Confirmation Modal Component
+const ConfirmationModal = ({ message, onConfirm, onCancel }) => {
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm text-center">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6 font-playfair">Confirm Action</h3>
+                <p className="text-lg text-gray-700 mb-8">{message}</p>
+                <div className="flex justify-center gap-4">
+                    <button
+                        onClick={onCancel}
+                        className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95"
+                    >
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+// Admin Dashboard Component with Product Management
+const AdminDashboard = ({ db, userId, isAuthReady, products, setProducts, appId }) => {
+  const [editingProduct, setEditingProduct] = useState(null); // State to hold product being edited
+  const [newProduct, setNewProduct] = useState({ name: '', description: '', price: '', imageUrl: '', category: '' }); // State for new product form
+  const [showAddForm, setShowAddForm] = useState(false); // State to toggle add product form visibility
+
+  // State for confirmation modal
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [confirmMessage, setConfirmMessage] = useState('');
+
+  const openConfirmModal = (message, action) => {
+      setConfirmMessage(message);
+      setConfirmAction(() => action); // Store the action function
+      setShowConfirmModal(true);
+  };
+
+  const closeConfirmModal = () => {
+      setShowConfirmModal(false);
+      setConfirmAction(null);
+      setConfirmMessage('');
+  };
+
+  const executeConfirmAction = () => {
+      if (confirmAction) {
+          confirmAction();
+      }
+      closeConfirmModal();
+  };
+
+  // Fetch products from Firestore
+  useEffect(() => {
+    if (db && userId && isAuthReady) {
+      const productsColRef = collection(db, `artifacts/${appId}/users/${userId}/products`);
+      const unsubscribe = onSnapshot(productsColRef, (snapshot) => {
+        const fetchedProducts = snapshot.docs.map(doc => ({
+          id: doc.id, // Use doc.id for Firestore document ID
+          ...doc.data()
+        }));
+        setProducts(fetchedProducts);
+      }, (error) => {
+        console.error("Error fetching products:", error);
+        // Display a user-friendly error message if products cannot be fetched
+      });
+      return () => unsubscribe(); // Cleanup listener
+    }
+  }, [db, userId, isAuthReady, setProducts, appId]); // Depend on db, userId, isAuthReady, setProducts, appId
+
+  // Function to handle adding a new product
+  const handleAddProduct = async (e) => {
+    e.preventDefault();
+    if (!newProduct.name || !newProduct.description || !newProduct.price || !newProduct.imageUrl || !newProduct.category) {
+      openConfirmModal('Please fill in all fields to add a product.', null);
+      return;
+    }
+    if (db && userId) {
+      try {
+        await addDoc(collection(db, `artifacts/${appId}/users/${userId}/products`), newProduct);
+        setNewProduct({ name: '', description: '', price: '', imageUrl: '', category: '' }); // Clear form
+        setShowAddForm(false); // Hide the form after adding
+      } catch (error) {
+        console.error("Error adding product:", error);
+        openConfirmModal(`Error adding product: ${error.message}`, null);
+      }
+    }
+  };
+
+  // Function to handle editing a product
+  const handleEditProduct = async (e) => {
+    e.preventDefault();
+    if (!editingProduct.name || !editingProduct.description || !editingProduct.price || !editingProduct.imageUrl || !editingProduct.category) {
+      openConfirmModal('Please fill in all fields to edit a product.', null);
+      return;
+    }
+    if (db && userId && editingProduct.id) {
+      try {
+        const productDocRef = doc(db, `artifacts/${appId}/users/${userId}/products`, editingProduct.id);
+        await setDoc(productDocRef, editingProduct, { merge: true });
+        setEditingProduct(null); // Exit editing mode
+      } catch (error) {
+        console.error("Error updating product:", error);
+        openConfirmModal(`Error updating product: ${error.message}`, null);
+      }
+    }
+  };
+
+  // Function to delete a product
+  const handleDeleteProduct = (productId) => {
+    openConfirmModal('Are you sure you want to delete this product?', async () => {
+      if (db && userId) {
+        try {
+          await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/products`, productId));
+        } catch (error) {
+          console.error("Error deleting product:", error);
+          openConfirmModal(`Error deleting product: ${error.message}`, null);
+        }
+      }
+    });
+  };
+
+  return (
+    <section className="py-24 px-6 md:px-12 bg-gradient-to-br from-green-50 to-blue-50 min-h-screen mt-[88px]">
+      <div className="max-w-7xl mx-auto bg-white p-10 rounded-xl shadow-2xl text-center border-t-4 border-green-500">
+        <h2 className="text-5xl font-bold text-gray-900 mb-8 font-playfair">Welcome, <span className="text-green-600">Admin!</span></h2>
+        <p className="text-lg text-gray-700 mb-10 leading-relaxed">
+          This is your exclusive dashboard. Here you can manage your website's products.
+        </p>
+        <p className="text-sm text-gray-500 mb-6">
+          Your User ID: <span className="font-mono text-gray-700 break-all">{userId || 'N/A'}</span>
+        </p>
+
+        {/* Add New Product Section */}
+        <div className="mb-12 p-8 bg-blue-50 rounded-xl shadow-lg border-l-4 border-blue-400">
+          <h3 className="text-3xl font-bold text-gray-900 mb-6 font-playfair">
+            {showAddForm ? 'Add New Product' : 'Product Management'}
+          </h3>
+          {!showAddForm && (
+            <button
+              onClick={() => { setShowAddForm(true); setEditingProduct(null); }}
+              className="bg-[#0AB9C6] hover:bg-[#089AA6] text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center mx-auto space-x-2"
+            >
+              <PlusCircle className="w-5 h-5" />
+              <span>Add New Product</span>
+            </button>
+          )}
+
+          {showAddForm && (
+            <form onSubmit={handleAddProduct} className="space-y-6 mt-8 text-left">
+              <div>
+                <label htmlFor="newName" className="block text-gray-700 text-lg font-medium mb-2">Product Name:</label>
+                <input
+                  type="text"
+                  id="newName"
+                  className="w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0AB9C6]"
+                  value={newProduct.name}
+                  onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="newDescription" className="block text-gray-700 text-lg font-medium mb-2">Description:</label>
+                <textarea
+                  id="newDescription"
+                  className="w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0AB9C6] h-32"
+                  value={newProduct.description}
+                  onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                  required
+                ></textarea>
+              </div>
+              <div>
+                <label htmlFor="newPrice" className="block text-gray-700 text-lg font-medium mb-2">Price:</label>
+                <input
+                  type="text"
+                  id="newPrice"
+                  className="w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0AB9C6]"
+                  value={newProduct.price}
+                  onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="newImageUrl" className="block text-gray-700 text-lg font-medium mb-2">Image URL:</label>
+                <input
+                  type="text"
+                  id="newImageUrl"
+                  className="w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0AB9C6]"
+                  value={newProduct.imageUrl}
+                  onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="newCategory" className="block text-gray-700 text-lg font-medium mb-2">Category:</label>
+                <input
+                  type="text"
+                  id="newCategory"
+                  className="w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0AB9C6]"
+                  value={newProduct.category}
+                  onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="flex justify-end gap-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95"
+                >
+                  Add Product
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+
+        {/* Product List for Editing/Deleting */}
+        <div className="mt-12">
+          <h3 className="text-3xl font-bold text-gray-900 mb-8 font-playfair">Manage Existing Products</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {products.map((product) => (
+              <div key={product.id} className="bg-orange-50 p-6 rounded-xl shadow-lg border-l-4 border-orange-400 flex flex-col items-center text-center">
+                <img src={product.imageUrl} alt={product.name} className="w-32 h-32 object-cover rounded-md mb-4" />
+                <h4 className="text-xl font-semibold text-gray-900 mb-2">{product.name}</h4>
+                <p className="text-gray-700 text-sm mb-2 line-clamp-2">{product.description}</p>
+                <p className="text-gray-800 font-bold mb-4">{product.price}</p>
+                <p className="text-gray-600 text-xs mb-4">Category: {product.category}</p>
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => { setEditingProduct(product); setShowAddForm(false); }}
+                    className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full shadow-md transition duration-300 transform hover:scale-110 active:scale-95"
+                    aria-label="Edit Product"
+                  >
+                    <Edit className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteProduct(product.id)}
+                    className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-md transition duration-300 transform hover:scale-110 active:scale-95"
+                    aria-label="Delete Product"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Edit Product Modal/Form */}
+        {editingProduct && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg">
+              <h3 className="text-3xl font-bold text-gray-900 mb-6 font-playfair">Edit Product</h3>
+              <form onSubmit={handleEditProduct} className="space-y-6 text-left">
+                <div>
+                  <label htmlFor="editName" className="block text-gray-700 text-lg font-medium mb-2">Product Name:</label>
+                  <input
+                    type="text"
+                    id="editName"
+                    className="w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0AB9C6]"
+                    value={editingProduct.name}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="editDescription" className="block text-gray-700 text-lg font-medium mb-2">Description:</label>
+                  <textarea
+                    id="editDescription"
+                    className="w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0AB9C6] h-32"
+                    value={editingProduct.description}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                    required
+                  ></textarea>
+                </div>
+                <div>
+                  <label htmlFor="editPrice" className="block text-gray-700 text-lg font-medium mb-2">Price:</label>
+                  <input
+                    type="text"
+                    id="editPrice"
+                    className="w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0AB9C6]"
+                    value={editingProduct.price}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, price: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="editImageUrl" className="block text-gray-700 text-lg font-medium mb-2">Image URL:</label>
+                  <input
+                    type="text"
+                    id="editImageUrl"
+                    className="w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0AB9C6]"
+                    value={editingProduct.imageUrl}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, imageUrl: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="editCategory" className="block text-gray-700 text-lg font-medium mb-2">Category:</label>
+                  <input
+                    type="text"
+                    id="editCategory"
+                    className="w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0AB9C6]"
+                    value={editingProduct.category}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="flex justify-end gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setEditingProduct(null)}
+                    className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 transform hover:scale-105 active:scale-95"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+      {showConfirmModal && (
+          <ConfirmationModal
+              message={confirmMessage}
+              onConfirm={executeConfirmAction}
+              onCancel={closeConfirmModal}
+          />
+      )}
+    </section>
+  );
+};
+
 
 // FAQs Page Component (Updated with AI Assistant and Random Prompts)
 const FAQsPage = ({ scrollToAI, setScrollToAI }) => {
@@ -1514,220 +2290,6 @@ const FAQsPage = ({ scrollToAI, setScrollToAI }) => {
         </div>
       </div>
     </section>
-  );
-};
-
-const App = () => {
-  // State for current page, used for simple routing
-  const [currentPage, setCurrentPage] = useState('home');
-  // State for tracking if AI section should be scrolled into view
-  const [scrollToAI, setScrollToAI] = useState(false);
-  // State for scroll-to-top button visibility
-  const [showScrollTop, setShowScrollTop] = useState(false);
-  // State for controlling the loading screen
-  const [isLoading, setIsLoading] = useState(true);
-  const [fadeEffect, setFadeEffect] = useState('fade-in');
-
-  // State for AI prompt visibility
-  const [showAiPrompt, setShowAiPrompt] = useState(true);
-
-  // Use static data for products and categories
-  const products = staticProductsData;
-  const categories = staticCategoriesData;
-
-  // Effect for the loading screen animation
-  useEffect(() => {
-    // Start fade out after 1.5 seconds
-    const fadeOutTimer = setTimeout(() => {
-      setFadeEffect('fade-out');
-    }, 1500);
-
-    // Hide loading screen completely after fade out animation (total 2 seconds)
-    const hideLoaderTimer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000); // Matches CSS transition duration + fadeOutTimer
-
-    return () => {
-      clearTimeout(fadeOutTimer);
-      clearTimeout(hideLoaderTimer);
-    };
-  }, []);
-
-  // Effect to handle scroll-to-top button visibility
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 300) { // Show button after scrolling 300px
-        setShowScrollTop(true);
-      } else {
-        setShowScrollTop(false);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-
-  // Effect for AI prompt visibility
-  useEffect(() => {
-    // Show prompt for 5 seconds on initial load, then hide
-    const promptTimer = setTimeout(() => {
-      setShowAiPrompt(false);
-    }, 5000); // Hide after 5 seconds
-
-    return () => clearTimeout(promptTimer);
-  }, []);
-
-  const handleAIShortcutClick = () => {
-    setCurrentPage('faqs');
-    setShowAiPrompt(false); // Hide prompt if user clicks the button
-    // Use a timeout to allow the page to render before scrolling
-    setTimeout(() => {
-      setScrollToAI(true); // Signal FAQsPage to scroll to AI section
-    }, 100); // Small delay
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top on navigation
-  };
-
-  const handlePageChangeAndScrollToTop = (page) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top on navigation
-  };
-
-  const handleScrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Handler to close the AI prompt manually.
-  const handleCloseAiPrompt = () => {
-    setShowAiPrompt(false);
-  };
-
-  // Helper function to render different pages based on state
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'home':
-        return <HomePage setCurrentPage={handlePageChangeAndScrollToTop} />;
-      case 'about':
-        return <AboutPage setCurrentPage={handlePageChangeAndScrollToTop} />;
-      case 'services':
-        return <ServicesPage setCurrentPage={handlePageChangeAndScrollToTop} />;
-      case 'products':
-        return <ProductsPage products={products} categories={categories} setCurrentPage={handlePageChangeAndScrollToTop} />;
-      case 'product-gallery':
-        return <ProductGalleryPage products={products} categories={categories} setCurrentPage={handlePageChangeAndScrollToTop} />;
-      case 'gallery':
-        return <GalleryPage />;
-      case 'testimonials':
-        return <TestimonialsPage setCurrentPage={handlePageChangeAndScrollToTop} />;
-      case 'appointment':
-        return <AppointmentPage setCurrentPage={handlePageChangeAndScrollToTop} />;
-      case 'faqs':
-        return <FAQsPage scrollToAI={scrollToAI} setScrollToAI={setScrollToAI} />;
-      default:
-        return <HomePage setCurrentPage={handlePageChangeAndScrollToTop} />;
-    }
-  };
-
-  return (
-    <div className="min-h-screen flex flex-col font-lato bg-gray-50 text-gray-800">
-      {isLoading && <LoadingScreen fadeEffect={fadeEffect} />}
-
-      <div className={`transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
-        <Navbar
-          setCurrentPage={handlePageChangeAndScrollToTop}
-          currentPage={currentPage}
-        />
-        <main className="flex-grow">
-          {renderPage()}
-        </main>
-        <Footer />
-
-        {/* Floating AI Assistant Shortcut Button and Prompt */}
-        <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50">
-          <button
-            onClick={handleAIShortcutClick}
-            className="bg-[#0AB9C6] hover:bg-[#089AA6] text-white p-4 rounded-full shadow-lg transition duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center group relative"
-            aria-label="Talk to AI Assistant"
-          >
-            <PawPrint className="h-6 w-6 relative" />
-            <Bot className="h-4 w-4 absolute top-1 right-1 text-yellow-300 group-hover:text-white transition-colors duration-300" />
-          </button>
-          {showAiPrompt && (
-            <div className="absolute bottom-full right-0 mb-4 mr-4 p-1 bg-[#0AB9C6] text-white text-sm rounded-md shadow-md opacity-100 animate-fadeInRight max-w-[250px] text-center flex items-center justify-between">
-              <span>Click here to talk to pet AI assistant!</span>
-              <button
-                onClick={handleCloseAiPrompt} // Close button for AI prompt
-                className="ml-2 p-1 rounded-full hover:bg-yellow-700 transition-colors duration-400"
-                aria-label="Close AI prompt"
-              >
-                <X className="w-4 h-4 text-white" />
-              </button>
-              {/* Arrow for the tooltip */}
-              <div className="absolute top-full right-4 w-0 h-0 border-t-[6px] border-l-[6px] border-r-[6px] border-t-[#0AB9C6] border-l-transparent border-r-transparent transform -translate-x-1/2"></div>
-            </div>
-          )}
-        </div>
-
-
-        {/* Floating Social Media Buttons */}
-        <div className="fixed bottom-4 left-4 md:bottom-6 md:left-6 flex flex-col space-y-3 z-50">
-            <a
-                href="https://www.facebook.com/share/1EDmkyYRoj/" // Replace with actual Facebook page URL
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center"
-                aria-label="Visit our Facebook page"
-            >
-                {/* Facebook SVG Icon */}
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-6 h-6"
-                >
-                    <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm3 8h-1.353c-.562 0-.671.29-.671.659v1.841h2.545l-.42 2.736h-2.125v6.529h-3v-6.529h-2.133v-2.736h2.133v-1.91c0-2.163 1.054-3.478 3.427-3.478h2.215v3z"/>
-                </svg>
-            </a>
-            <a
-                href="https://www.instagram.com/abhappypaws?igsh=MXY0OGJhZGl4YWRqZA==" // Replace with actual Instagram page URL
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-pink-600 hover:bg-pink-700 text-white p-3 rounded-full shadow-lg transition duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center"
-                aria-label="Visit our Instagram page"
-            >
-                {/* Instagram SVG Icon */}
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-6 h-6"
-                >
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.585-.012-4.85-.07c-3.254-.148-4.77-1.691-4.919-4.919-.058-1.265-.07-1.646-.07-4.85s.012-3.585.07-4.85c.149-3.227 1.664-4.771 4.919-4.919 1.266-.058 1.644-.07 4.85-.07zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.073 4.948.073s3.668-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.791-4-4s1.791-4 4-4 4 1.791 4 4-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                </svg>
-            </a>
-        </div>
-
-
-        {/* Scroll-to-Top Button */}
-        {showScrollTop && (
-          <button
-            onClick={handleScrollToTop}
-            className="fixed bottom-20 right-4 md:bottom-24 md:right-6 bg-gray-700 hover:bg-gray-800 text-white p-3 rounded-full shadow-lg transition duration-300 transform hover:scale-110 active:scale-95 z-40"
-            aria-label="Scroll to top"
-          >
-            <ArrowUpCircle className="h-6 w-6" />
-          </button>
-        )}
-
-        {/* Live Time IST - Positioned below navbar */}
-        <LiveTimeIST />
-      </div>
-    </div>
   );
 };
 
