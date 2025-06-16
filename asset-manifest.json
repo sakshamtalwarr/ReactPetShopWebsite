@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/ReactPetShopWebsite/static/css/main.3cf3d5cc.css",
-    "main.js": "/ReactPetShopWebsite/static/js/main.945bf7ac.js",
+    "main.css": "/ReactPetShopWebsite/static/css/main.36d49dd1.css",
+    "main.js": "/ReactPetShopWebsite/static/js/main.1a32eb1d.js",
     "static/js/453.8d5b1fdb.chunk.js": "/ReactPetShopWebsite/static/js/453.8d5b1fdb.chunk.js",
     "index.html": "/ReactPetShopWebsite/index.html",
-    "main.3cf3d5cc.css.map": "/ReactPetShopWebsite/static/css/main.3cf3d5cc.css.map",
-    "main.945bf7ac.js.map": "/ReactPetShopWebsite/static/js/main.945bf7ac.js.map",
+    "main.36d49dd1.css.map": "/ReactPetShopWebsite/static/css/main.36d49dd1.css.map",
+    "main.1a32eb1d.js.map": "/ReactPetShopWebsite/static/js/main.1a32eb1d.js.map",
     "453.8d5b1fdb.chunk.js.map": "/ReactPetShopWebsite/static/js/453.8d5b1fdb.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.3cf3d5cc.css",
-    "static/js/main.945bf7ac.js"
+    "static/css/main.36d49dd1.css",
+    "static/js/main.1a32eb1d.js"
   ]
 }
